@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+(function(){ if(!sessionStorage.getItem('admin_token')) window.location.replace('login.html'); })();
+</script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Manage Slots — Astro Annie Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;1,400&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../_shared.css"/>
+<style>
+.slot-layout{display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:start}
+.panel{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-sm)}
+.panel-head{padding:18px 22px;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-family:'Cinzel',serif;font-size:14px;font-weight:600;letter-spacing:.04em}
+.panel-body{padding:20px 22px}
+.slot-day-group{margin-bottom:22px}
+.day-label{font-family:'Cinzel',serif;font-size:12px;font-weight:600;color:var(--text-2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.day-label::after{content:'';flex:1;height:.5px;background:var(--border)}
+.slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.slot-card{background:var(--bg);border:.5px solid var(--border-md);border-radius:var(--r-sm);padding:12px 14px;display:flex;align-items:center;gap:12px;transition:.15s;position:relative}
+.slot-card:hover{border-color:rgba(107,79,160,.4);background:var(--purple-pale)}
+.slot-card.booked{opacity:.55;background:#fff8f8;border-color:rgba(196,94,126,.25)}
+.slot-time{font-family:'Cinzel',serif;font-size:16px;font-weight:600;color:var(--text);flex-shrink:0}
+.slot-type{font-size:11px;color:var(--text-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot-status{font-size:10px;color:var(--text-3);margin-top:2px}
+.slot-del{position:absolute;top:7px;right:8px;background:transparent;border:none;cursor:pointer;color:var(--text-3);font-size:14px;opacity:.6;transition:.13s;line-height:1}
+.slot-del:hover{opacity:1;color:#C45E7E}
+.batch-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.time-chip{display:flex;align-items:center;gap:5px;background:var(--purple-pale);color:var(--purple);font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px}
+.time-chip button{background:transparent;border:none;cursor:pointer;color:var(--purple);font-size:13px;line-height:1;padding:0 2px}
+.time-chip button:hover{color:#C45E7E}
+.add-time-row{display:flex;gap:8px;align-items:center;margin-bottom:18px}
+.preview-slot{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg);border-radius:var(--r-sm);border:.5px solid var(--border);margin-bottom:6px;font-size:13px}
+.preview-slot .pdate{font-weight:600;color:var(--text)}
+.preview-slot .ptime{color:var(--text-3);font-size:12px}
+.stats-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.strip-card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;box-shadow:var(--sh-sm);text-align:center}
+.strip-val{font-family:'Cinzel',serif;font-size:24px;font-weight:600;color:var(--text)}
+.strip-lbl{font-size:10px;color:var(--text-3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+.empty-slots{padding:40px;text-align:center;color:var(--text-3);font-size:13px}
+.role-super{color:#C9A84C!important;font-weight:700}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon" style="background:linear-gradient(135deg,#C9A84C,#E8CC85);font-family:'Cinzel',serif;font-size:16px;color:#3D2800;font-weight:700;letter-spacing:0">A</div>
+    <div>
+      <div class="sb-brand">Astro Annie</div>
+      <div class="sb-sub">Admin Portal</div>
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Main</div>
+    <a class="nav-a" href="../dashboard.html"><span class="nav-ic">✦</span>Dashboard</a>
+    <a class="nav-a" href="bookings.html"><span class="nav-ic">📅</span>Bookings<span class="nav-badge" id="sbBk">—</span></a>
+    <a class="nav-a" href="inquiry.html"><span class="nav-ic">💌</span>Inquiries<span class="nav-badge" id="sbInq">—</span></a>
+    <a class="nav-a active" href="slots.html"><span class="nav-ic">🗓</span>Manage Slots</a>
+    <div class="sb-label" id="superMenu" style="display:none">Superuser</div>
+    <a class="nav-a" href="AdminUsers.html" id="adminUsersLink" style="display:none"><span class="nav-ic">👥</span>Manage Admins</a>
+  </div>
+  <div class="sb-bottom">
+    <a class="nav-a" onclick="doLogout()" style="cursor:pointer"><span class="nav-ic">⬡</span>Logout</a>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="search">
+      <span style="color:var(--text-3)">🔍</span>
+      <input type="text" id="qInput" placeholder="Filter slots…"/>
+    </div>
+    <div class="tb-right">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div class="tb-avatar" id="tbAvatar">?</div>
+        <div class="tb-info">
+          <div class="name" id="tbName">—</div>
+          <div class="role" id="tbRole">Admin</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+<div class="content">
+    <div class="ph">
+      <div class="ph-left">
+        <div class="eyebrow">✦ ✧ ✦</div>
+        <h1>Manage Slots</h1>
+        <div class="sub">Set your available reading slots — clients will see only these times</div>
+      </div>
+      <button class="btn-ghost" onclick="deleteAllPast()">🗑 Clear Past Slots</button>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="stats-strip">
+      <div class="strip-card"><div class="strip-val" id="stTotal">—</div><div class="strip-lbl">Total Slots</div></div>
+      <div class="strip-card"><div class="strip-val" id="stOpen">—</div><div class="strip-lbl">Open</div></div>
+      <div class="strip-card"><div class="strip-val" id="stBooked">—</div><div class="strip-lbl">Booked</div></div>
+    </div>
+
+    <div class="slot-layout">
+      <!-- LEFT: slot list -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Upcoming Slots</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <select class="sel" id="viewFilter" onchange="renderSlots()">
+              <option value="all">All</option>
+              <option value="open">Open Only</option>
+              <option value="booked">Booked Only</option>
+            </select>
+          </div>
+        </div>
+        <div class="panel-body" id="slotList">
+          <div class="empty-slots">Loading slots…</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: add panel -->
+      <div>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-head"><div class="panel-title">✦ Add Slots</div></div>
+          <div class="panel-body">
+
+            <!-- Step 1: Pick dates (up to 3 days) -->
+            <div style="margin-bottom:16px">
+              <div class="form-label" style="margin-bottom:8px">1 — Pick Dates (max 3)</div>
+              <div id="datePillBox" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;min-height:32px"></div>
+              <div style="display:flex;gap:8px">
+                <input class="form-input" type="date" id="datePickerInput" style="flex:1"/>
+                <button class="btn-primary" style="padding:9px 14px" onclick="addDatePill()">+ Date</button>
+              </div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:6px">You can add up to 3 different dates</div>
+            </div>
+
+            <!-- Step 2: Add times -->
+            <div style="margin-bottom:16px">
+              <div class="form-label" style="margin-bottom:8px">2 — Add Time Slots</div>
+              <div id="timePillBox" class="batch-row"></div>
+              <div class="add-time-row">
+                <input class="form-input" type="time" id="timeInput" style="flex:1"/>
+                <button class="btn-primary" style="padding:9px 14px" onclick="addTimePill()">+ Time</button>
+              </div>
+              <!-- quick templates -->
+              <div style="font-size:11px;color:var(--text-3);margin-bottom:6px">Quick add:</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn-ghost" style="font-size:11px;padding:5px 10px" onclick="addPreset(['09:00','10:00','11:00'])">Morning</button>
+                <button class="btn-ghost" style="font-size:11px;padding:5px 10px" onclick="addPreset(['14:00','15:00','16:00'])">Afternoon</button>
+                <button class="btn-ghost" style="font-size:11px;padding:5px 10px" onclick="addPreset(['18:00','19:00','20:00'])">Evening</button>
+                <button class="btn-ghost" style="font-size:11px;padding:5px 10px" onclick="addPreset(['09:00','11:00','14:00','16:00','18:00'])">Full Day</button>
+              </div>
+            </div>
+
+            <!-- Step 3: Reading type (optional) -->
+            <div style="margin-bottom:16px">
+              <div class="form-label" style="margin-bottom:6px">3 — Reading Type (optional)</div>
+              <select class="form-input" id="slotType">
+                <option value="">Any / All Types</option>
+                <option>Three Card</option><option>Celtic Cross</option><option>Love Reading</option>
+                <option>Career Path</option><option>Year Ahead</option><option>Full Spread</option>
+                <option>Numerology</option><option>Lal Kitab</option><option>Vastu</option>
+              </select>
+            </div>
+
+            <!-- Preview -->
+            <div id="previewBox" style="margin-bottom:14px;display:none">
+              <div class="form-label" style="margin-bottom:8px">Preview — slots to be created:</div>
+              <div id="previewList"></div>
+            </div>
+
+            <button class="btn-primary" style="width:100%;justify-content:center;padding:12px" id="createBtn" onclick="createSlots()">
+              Create Slots
+            </button>
+          </div>
+        </div>
+
+        <!-- Single slot quick add -->
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Quick Single Slot</div></div>
+          <div class="panel-body">
+            <div class="form-row">
+              <div class="form-g"><label class="form-label">Date</label><input class="form-input" type="date" id="sqDate"/></div>
+              <div class="form-g"><label class="form-label">Time</label><input class="form-input" type="time" id="sqTime"/></div>
+            </div>
+            <div class="form-row full">
+              <div class="form-g">
+                <label class="form-label">Notes (optional)</label>
+                <input class="form-input" id="sqNotes" placeholder="e.g. Hindi preferred"/>
+              </div>
+            </div>
+            <button class="btn-ghost" style="width:100%;justify-content:center;padding:10px" onclick="addSingleSlot()">Add Slot</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API='http://127.0.0.1:8000/api';
+let ALL_SLOTS=[];
+let selectedDates=[];
+let selectedTimes=[];
+
+function toast(msg,ok=true){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.style.borderLeftColor=ok?'var(--gold)':'#C45E7E';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);
+}
+function fmtDate(d){if(!d)return'—';return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});}
+function fmtTime(t){if(!t)return'—';const[h,m]=t.split(':');const hh=parseInt(h);return`${hh>12?hh-12:hh||12}:${m} ${hh>=12?'PM':'AM'}`;}
+
+async function load(){
+  try{
+    const r=await fetch(`${API}/slots/`);
+    ALL_SLOTS=await r.json();
+    updateStats();renderSlots();
+    const br=await fetch(`${API}/bookings/`);const bks=await br.json();
+    document.getElementById('sbBk').textContent=bks.filter(b=>b.status==='pending').length;
+    const ir=await fetch(`${API}/inquiries/`);const inqs=await ir.json();
+    document.getElementById('sbInq').textContent=inqs.filter(i=>i.status==='new').length;
+  }catch(e){
+    toast('⚠ Backend offline — run: python manage.py runserver',false);
+    document.getElementById('slotList').innerHTML='<div class="empty-slots" style="color:#C45E7E">Backend offline</div>';
+  }
+}
+
+function updateStats(){
+  document.getElementById('stTotal').textContent=ALL_SLOTS.length;
+  document.getElementById('stOpen').textContent=ALL_SLOTS.filter(s=>!s.is_booked).length;
+  document.getElementById('stBooked').textContent=ALL_SLOTS.filter(s=>s.is_booked).length;
+}
+
+function renderSlots(){
+  const q=(document.getElementById('qInput').value||'').toLowerCase();
+  const vf=document.getElementById('viewFilter').value;
+  let data=ALL_SLOTS.filter(s=>{
+    if(vf==='open'&&s.is_booked)return false;
+    if(vf==='booked'&&!s.is_booked)return false;
+    if(q&&!(s.date.includes(q)||s.time.includes(q)||(s.reading_type||'').toLowerCase().includes(q)))return false;
+    return true;
+  });
+
+  if(!data.length){
+    document.getElementById('slotList').innerHTML='<div class="empty-slots">No slots found. Add some using the panel →</div>';
+    return;
+  }
+
+  // group by date
+  const grouped={};
+  data.forEach(s=>{
+    if(!grouped[s.date])grouped[s.date]=[];
+    grouped[s.date].push(s);
+  });
+
+  document.getElementById('slotList').innerHTML=Object.keys(grouped).sort().map(date=>`
+    <div class="slot-day-group">
+      <div class="day-label">${fmtDate(date)}</div>
+      <div class="slot-grid">
+        ${grouped[date].map(s=>`
+          <div class="slot-card ${s.is_booked?'booked':''}">
+            <div style="flex:1">
+              <div class="slot-time">${fmtTime(s.time)}</div>
+              <div class="slot-type">${s.reading_type||'All Types'}</div>
+              <div class="slot-status">${s.is_booked?'🔴 Booked':'🟢 Open'}${s.notes?` · ${s.notes}`:''}</div>
+            </div>
+            <button class="slot-del" onclick="delSlot(${s.id})" title="Delete">✕</button>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ── Date pills ──
+function addDatePill(){
+  const v=document.getElementById('datePickerInput').value;
+  if(!v){toast('Pick a date first',false);return;}
+  if(selectedDates.includes(v)){toast('Date already added',false);return;}
+  if(selectedDates.length>=3){toast('Max 3 dates allowed',false);return;}
+  selectedDates.push(v);
+  renderDatePills();updatePreview();
+  document.getElementById('datePickerInput').value='';
+}
+function removeDatePill(d){selectedDates=selectedDates.filter(x=>x!==d);renderDatePills();updatePreview();}
+function renderDatePills(){
+  document.getElementById('datePillBox').innerHTML=selectedDates.map(d=>`
+    <span class="time-chip">📅 ${fmtDate(d)}<button onclick="removeDatePill('${d}')">✕</button></span>`).join('');
+}
+
+// ── Time pills ──
+function addTimePill(){
+  const v=document.getElementById('timeInput').value;
+  if(!v){toast('Pick a time first',false);return;}
+  if(selectedTimes.includes(v)){toast('Time already added',false);return;}
+  selectedTimes.push(v);selectedTimes.sort();
+  renderTimePills();updatePreview();
+  document.getElementById('timeInput').value='';
+}
+function removeTimePill(t){selectedTimes=selectedTimes.filter(x=>x!==t);renderTimePills();updatePreview();}
+function renderTimePills(){
+  document.getElementById('timePillBox').innerHTML=selectedTimes.map(t=>`
+    <span class="time-chip">⏰ ${fmtTime(t)}<button onclick="removeTimePill('${t}')">✕</button></span>`).join('');
+}
+function addPreset(times){
+  times.forEach(t=>{ if(!selectedTimes.includes(t))selectedTimes.push(t); });
+  selectedTimes.sort();renderTimePills();updatePreview();
+}
+
+// ── Preview ──
+function updatePreview(){
+  const box=document.getElementById('previewBox');
+  const list=document.getElementById('previewList');
+  if(!selectedDates.length||!selectedTimes.length){box.style.display='none';return;}
+  box.style.display='block';
+  const pairs=[];
+  selectedDates.forEach(d=>selectedTimes.forEach(t=>pairs.push({d,t})));
+  list.innerHTML=pairs.map(({d,t})=>`
+    <div class="preview-slot">
+      <span class="pdate">${fmtDate(d)}</span>
+      <span class="ptime">${fmtTime(t)}</span>
+    </div>`).join('');
+  document.getElementById('createBtn').textContent=`Create ${pairs.length} Slot${pairs.length>1?'s':''}`;
+}
+
+// ── Create slots (batch) ──
+async function createSlots(){
+  if(!selectedDates.length||!selectedTimes.length){toast('Add at least one date and one time',false);return;}
+  const rt=document.getElementById('slotType').value;
+  const btn=document.getElementById('createBtn');btn.textContent='Creating…';btn.disabled=true;
+  const pairs=[];
+  selectedDates.forEach(d=>selectedTimes.forEach(t=>pairs.push({date:d,time:t,reading_type:rt})));
+  let ok=0,fail=0;
+  await Promise.all(pairs.map(async p=>{
+    try{
+      const r=await fetch(`${API}/slots/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+      if(r.ok)ok++;else fail++;
+    }catch{fail++;}
+  }));
+  toast(`✓ ${ok} slot${ok>1?'s':''} created${fail?` (${fail} failed — duplicate?)`:''}`);
+  selectedDates=[];selectedTimes=[];
+  renderDatePills();renderTimePills();
+  document.getElementById('previewBox').style.display='none';
+  btn.textContent='Create Slots';btn.disabled=false;
+  await load();
+}
+
+// ── Single slot ──
+async function addSingleSlot(){
+  const date=document.getElementById('sqDate').value;
+  const time=document.getElementById('sqTime').value;
+  if(!date||!time){toast('Date and time required',false);return;}
+  const notes=document.getElementById('sqNotes').value;
+  try{
+    const r=await fetch(`${API}/slots/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date,time,notes})});
+    if(!r.ok)throw new Error(await r.text());
+    toast('✓ Slot added');
+    document.getElementById('sqDate').value='';
+    document.getElementById('sqTime').value='';
+    document.getElementById('sqNotes').value='';
+    await load();
+  }catch(e){toast('Error (slot may already exist): '+e.message,false);}
+}
+
+async function delSlot(id){
+  try{await fetch(`${API}/slots/${id}/`,{method:'DELETE'});await load();toast('✓ Slot deleted');}
+  catch{toast('Delete failed',false);}
+}
+
+async function deleteAllPast(){
+  if(!confirm('Delete all past (already-gone) slots?'))return;
+  const today=new Date().toISOString().slice(0,10);
+  const past=ALL_SLOTS.filter(s=>s.date<today);
+  await Promise.all(past.map(s=>fetch(`${API}/slots/${s.id}/`,{method:'DELETE'})));
+  toast(`✓ Removed ${past.length} past slot${past.length>1?'s':''}`);
+  await load();
+}
+
+document.getElementById('qInput').addEventListener('input',renderSlots);
+
+// Set default date to today
+document.getElementById('datePickerInput').min=new Date().toISOString().slice(0,10);
+document.getElementById('sqDate').min=new Date().toISOString().slice(0,10);
+
+load();
+</script>
+
+<script>
+function doLogout(){
+  sessionStorage.removeItem('admin_token');
+  sessionStorage.removeItem('admin_user');
+  window.location.href='login.html';
+}
+const _u = sessionStorage.getItem('admin_user');
+if(_u) document.getElementById('admin-greeting').textContent = 'Hi, '+_u;
+</script>
+</body>
+</html>
+<script>
+// User info from session
+const adminUser = sessionStorage.getItem('admin_user') || 'Admin';
+const adminRole = sessionStorage.getItem('admin_role') || 'admin';
+const isSuperuser = adminRole === 'superuser';
+document.getElementById('tbName').textContent = adminUser;
+document.getElementById('tbRole').textContent = isSuperuser ? '⭐ Superuser' : 'Admin';
+if(isSuperuser) document.getElementById('tbRole').className = 'role role-super';
+document.getElementById('tbAvatar').textContent = adminUser.slice(0,2).toUpperCase();
+if(isSuperuser){
+  document.getElementById('superMenu').style.display='';
+  document.getElementById('adminUsersLink').style.display='';
+}
+function doLogout(){ sessionStorage.clear(); window.location.href='../login.html'; }
+</script>
+</body>
+</html>

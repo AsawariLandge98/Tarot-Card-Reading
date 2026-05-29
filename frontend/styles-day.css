@@ -1,0 +1,314 @@
+/* ───────────────────────────────────────────────────────────────
+   Daylight overrides — "Reading Table at Noon"
+   Layered AFTER styles.css. Only sets what changes:
+   palette, a few key rules, candle to a sage sprig.
+   ───────────────────────────────────────────────────────────────*/
+
+:root {
+  /* parchment + ink, marigold accents */
+  --velvet-0: oklch(0.97 0.012 82);   /* outermost — palest cream */
+  --velvet-1: oklch(0.94 0.022 80);   /* page bg */
+  --velvet-2: oklch(0.90 0.034 78);   /* pool of light */
+  --velvet-3: oklch(0.86 0.045 76);   /* warmest center */
+  --gold-hi:  oklch(0.58 0.16 58);    /* darker saturated for contrast */
+  --gold:     oklch(0.50 0.16 55);
+  --gold-lo:  oklch(0.42 0.15 50);
+  --ivory:    oklch(0.18 0.04 50);    /* ink — body text */
+  --ivory-mu: oklch(0.38 0.04 60);    /* muted ink */
+  --oxblood:  oklch(0.32 0.16 22);    /* deep red accents */
+  --shadow:   oklch(0.30 0.06 50 / 0.20);
+  /* Purple accent — aubergine on parchment */
+  --purple-hi: oklch(0.50 0.16 318);  /* mid mauve */
+  --purple:    oklch(0.40 0.15 314);  /* deeper aubergine */
+  --purple-lo: oklch(0.32 0.13 312);  /* darkest */
+}
+
+/* Body bg + general */
+html, body {
+  background: var(--velvet-0);
+  color: var(--ivory);
+}
+
+/* The "velvet" radial — soften to a sunbeam wash with a violet edge */
+.velvet {
+  background:
+    radial-gradient(ellipse 60% 45% at 50% 36%,
+      var(--velvet-3) 0%,
+      var(--velvet-2) 35%,
+      oklch(0.91 0.025 320) 65%,
+      var(--velvet-0) 100%);
+}
+
+/* Linen weave instead of velvet pile */
+.velvet::before {
+  background:
+    repeating-linear-gradient(46deg,
+      transparent 0, transparent 3px,
+      oklch(0.3 0.04 50 / 0.05) 3px, oklch(0.3 0.04 50 / 0.05) 4px),
+    repeating-linear-gradient(-44deg,
+      transparent 0, transparent 5px,
+      oklch(0.3 0.04 50 / 0.025) 5px, oklch(0.3 0.04 50 / 0.025) 6px);
+  mix-blend-mode: multiply;
+  opacity: 0.6;
+}
+
+/* Vignette → soft paper edges */
+.velvet::after {
+  background: radial-gradient(ellipse 90% 80% at 50% 45%,
+    transparent 55%, oklch(0.35 0.04 50 / 0.18) 100%);
+}
+
+/* The candle glow — sunbeam wash with a whisper of lavender at the edge */
+.glow {
+  background:
+    radial-gradient(ellipse at center,
+      oklch(0.92 0.08 78 / 0.55) 0%,
+      oklch(0.88 0.06 80 / 0.25) 28%,
+      oklch(0.78 0.08 318 / 0.10) 55%,
+      transparent 75%);
+}
+
+/* Top bar mark */
+.mark-glyph {
+  border-color: var(--purple);
+  color: var(--purple);
+  background: oklch(1 0 0 / 0.55);
+}
+.mark-name { color: var(--ivory); font-size: 26px; }
+.mark-domain { color: var(--ivory-mu); border-left-color: oklch(0.3 0.04 50 / 0.2); }
+.nav-actions { color: var(--ivory-mu); }
+.book-btn {
+  border-color: var(--gold);
+  color: var(--gold-hi);
+}
+.book-btn:hover { background: oklch(0.58 0.16 58 / 0.10); }
+
+/* Hero halo — softer/lighter scrim on parchment */
+.hero-copy::before {
+  background: radial-gradient(ellipse at center,
+    oklch(1 0 0 / 0.55) 0%,
+    oklch(1 0 0 / 0.30) 40%,
+    transparent 75%);
+  filter: blur(14px);
+}
+.hero-copy .sub .name { color: var(--gold-hi); }
+
+/* Scroll hint */
+.scroll-hint { color: var(--ivory-mu); }
+.scroll-hint .arrow {
+  background: linear-gradient(to bottom,
+    transparent 0%, var(--gold) 40%, var(--gold) 100%);
+}
+
+/* ─── Cards ─── */
+.card-face, .card-back {
+  box-shadow:
+    0 18px 36px -10px var(--shadow),
+    0 6px 14px -6px oklch(0.30 0.06 50 / 0.16),
+    0 0 0 1px oklch(0.55 0.13 60 / 0.25) inset;
+}
+
+/* Card backs: parchment with violet ink ornamentation */
+.card-back {
+  background:
+    radial-gradient(ellipse at center,
+      oklch(0.95 0.04 320) 0%,
+      oklch(0.90 0.06 318) 60%,
+      oklch(0.84 0.08 316) 100%);
+}
+/* Push the inverted dark-velvet SVG into the violet hue range */
+.card-back > svg {
+  filter: invert(0.92) hue-rotate(220deg) saturate(1.5) brightness(1.0);
+  mix-blend-mode: multiply;
+}
+
+/* The big card face on reading panels — paper with lavender tint */
+.rp-card {
+  background: oklch(0.96 0.025 320);
+  box-shadow:
+    0 30px 60px -20px oklch(0.35 0.12 318 / 0.25),
+    0 10px 30px -10px oklch(0.30 0.06 50 / 0.20),
+    0 0 0 1px oklch(0.50 0.16 318 / 0.32) inset,
+    0 0 0 6px oklch(1 0 0 / 0.5);
+}
+
+/* Apply a violet wash to the face SVG so the gold ink reads as purple too */
+.rp-card-face > svg {
+  filter: hue-rotate(220deg) saturate(0.95) brightness(1.02);
+}
+
+/* Card labels under spread */
+.card-label .roman { color: var(--purple); }
+.card-label .name { color: var(--ivory-mu); }
+
+/* Choose-prompt */
+.choose-prompt .line { color: var(--ivory-mu); }
+
+/* ─── Reading panels ─── */
+.rp-card {
+  box-shadow:
+    0 30px 60px -20px var(--shadow),
+    0 10px 30px -10px oklch(0.30 0.06 50 / 0.20),
+    0 0 0 1px oklch(0.55 0.13 60 / 0.3) inset,
+    0 0 0 6px oklch(1 0 0 / 0.4);
+}
+.rp-eyebrow { color: var(--purple); }
+.rp-title { color: var(--ivory); }
+.rp-lede { color: var(--ivory); }
+.rp-pos { color: var(--ivory-mu); }
+.rp-roman { color: var(--purple-hi); }
+
+.rp-bio { color: var(--ivory-mu); }
+.rp-bio em { color: var(--gold-hi); }
+
+.rp-footnote { color: var(--ivory-mu); }
+
+/* Portrait — drop the dark sepia so daylight feels natural; soft violet halo */
+.portrait-wrap {
+  border-color: oklch(0.50 0.16 318 / 0.45);
+  box-shadow:
+    0 18px 36px -12px oklch(0.35 0.12 318 / 0.30),
+    0 0 0 6px oklch(1 0 0 / 0.55),
+    0 0 0 7px oklch(0.50 0.16 318 / 0.18);
+}
+.portrait-wrap img {
+  filter: saturate(1.0) contrast(1.02) brightness(1.0);
+}
+.portrait-wrap::after {
+  background: none;
+}
+
+/* Credentials */
+.creds li { color: var(--ivory-mu); }
+
+/* Items */
+.item { border-bottom-color: oklch(0.30 0.06 50 / 0.1); }
+.item-num { color: var(--gold-hi); }
+.item-head { color: var(--ivory); }
+.item-desc { color: var(--ivory-mu); }
+.item-tag { color: var(--gold); }
+
+/* CTAs */
+.btn-primary { background: var(--gold); color: oklch(0.98 0.01 80); }
+.btn-primary:hover { background: var(--gold-hi); }
+.btn-ghost {
+  color: var(--ivory);
+  border-color: oklch(0.30 0.06 50 / 0.3);
+}
+.btn-ghost:hover { border-color: var(--gold); color: var(--gold-hi); }
+
+/* Footer */
+.footer-band {
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    oklch(0.92 0.025 80) 70%,
+    oklch(0.90 0.030 78) 100%);
+  border-top-color: oklch(0.55 0.13 60 / 0.25);
+}
+.footer-inner { border-bottom-color: oklch(0.30 0.06 50 / 0.12); }
+.footer-headline { color: var(--ivory); }
+.footer-headline .em { color: var(--gold-hi); }
+.footer-col h4 { color: var(--gold); }
+.footer-col p, .footer-col a { color: var(--ivory-mu); }
+.footer-col a:hover { color: var(--ivory); }
+.footer-sig { color: var(--ivory-mu); opacity: 0.7; }
+
+/* Embers → soft dust motes for daylight */
+.ember {
+  background: oklch(0.85 0.06 78);
+  box-shadow: 0 0 6px oklch(0.85 0.06 78 / 0.6);
+  opacity: 0;
+}
+
+/* Unlit candle on parchment — darken so it reads */
+.candle svg {
+  filter: brightness(0.72) saturate(1.3) contrast(1.05);
+}
+
+/* Theme toggle link in top bar */
+.theme-link {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ivory-mu);
+  text-decoration: none;
+  border-left: 1px solid oklch(0.30 0.06 50 / 0.18);
+  padding-left: 14px;
+  margin-left: 6px;
+}
+.theme-link:hover { color: var(--gold-hi); }
+
+/* ─── Day overrides for booking / testimonials / FAQ ─── */
+.section-title { color: var(--ivory); }
+.section-sub { color: var(--ivory-mu); }
+
+/* Steps */
+.step-num { color: var(--purple-hi); }
+.step-thread {
+  background: linear-gradient(to right,
+    var(--purple) 0%, oklch(0.50 0.16 318 / 0.4) 50%, transparent 100%);
+}
+.step-title { color: var(--ivory); }
+.step-body { color: var(--ivory-mu); }
+.step-action {
+  color: var(--purple-hi);
+  border-bottom-color: oklch(0.50 0.16 318 / 0.4);
+}
+.step-action:hover { color: var(--purple); border-bottom-color: var(--purple); }
+
+/* Testimonials — switch to ivory paper notes on the parchment table */
+.testimonials {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 30%,
+      oklch(0.85 0.08 78 / 0.3) 0%,
+      transparent 60%);
+}
+.testi {
+  background: linear-gradient(180deg,
+    oklch(0.99 0.01 82) 0%,
+    oklch(0.95 0.02 80) 100%);
+  color: oklch(0.18 0.04 50);
+  box-shadow:
+    0 22px 36px -16px oklch(0.30 0.06 50 / 0.30),
+    0 8px 16px -6px oklch(0.30 0.06 50 / 0.20),
+    0 0 0 1px oklch(0.55 0.13 60 / 0.20);
+}
+.testi:hover {
+  box-shadow:
+    0 28px 44px -16px oklch(0.30 0.06 50 / 0.36),
+    0 0 0 1px oklch(0.55 0.13 60 / 0.32);
+}
+.testi::before {
+  background: oklch(0.55 0.14 318 / 0.55);
+  box-shadow: 0 2px 6px oklch(0.30 0.06 50 / 0.15);
+}
+.testi-stars { color: var(--gold); }
+.testi-body { color: oklch(0.20 0.04 50); }
+.testi-body::before, .testi-body::after { color: var(--purple); }
+.testi-caption { border-top-color: oklch(0.55 0.13 60 / 0.22); }
+.testi-name { color: oklch(0.20 0.04 50); }
+.testi-meta { color: oklch(0.45 0.04 50); }
+
+.testi-footer {
+  border-top-color: oklch(0.30 0.06 50 / 0.15);
+  border-bottom-color: oklch(0.30 0.06 50 / 0.15);
+}
+.stat-num { color: var(--purple-hi); }
+.stat-num span { color: var(--ivory-mu); }
+.stat-label { color: var(--ivory-mu); }
+
+/* FAQ */
+.faq-item { border-bottom-color: oklch(0.30 0.06 50 / 0.15); }
+.faq-item:first-child { border-top-color: oklch(0.30 0.06 50 / 0.15); }
+.faq-q { color: var(--ivory); }
+.faq-q:hover { color: var(--purple-hi); }
+.faq-open .faq-q { color: var(--purple-hi); }
+.faq-toggle { color: var(--purple); }
+.faq-a { color: var(--ivory-mu); }
+.faq-cta { color: var(--ivory-mu); }
+.faq-cta a {
+  color: var(--gold-hi);
+  border-bottom-color: oklch(0.50 0.16 55 / 0.4);
+}
+.faq-cta a:hover { border-bottom-color: var(--gold-hi); }

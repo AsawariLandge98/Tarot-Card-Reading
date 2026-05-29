@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin Login — Astro Annie</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --gold:#c9a84c;
+  --gold-light:#e2c97e;
+  --dark:#0d0d1a;
+  --dark2:#13132a;
+  --card:#1a1a30;
+  --border:rgba(201,168,76,0.25);
+  --text:#e8e0d0;
+  --muted:#8a8aa0;
+  --error:#e07070;
+  --success:#6dbf8a;
+}
+
+body{
+  font-family:'Raleway',sans-serif;
+  background:var(--dark);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(90,60,120,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(60,40,100,0.12) 0%, transparent 50%);
+}
+
+.wrap{width:100%;max-width:420px}
+
+/* ── Brand ── */
+.brand{text-align:center;margin-bottom:40px}
+.brand-glyph{
+  width:56px;height:56px;
+  border:1px solid var(--gold);
+  border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;
+  font-size:22px;color:var(--gold);
+  margin-bottom:14px;
+}
+.brand-name{
+  font-family:'Cinzel',serif;
+  font-size:20px;letter-spacing:.12em;
+  color:var(--text);margin-bottom:4px;
+}
+.brand-sub{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+/* ── Card ── */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:40px 36px;
+}
+
+/* ── Tabs (Login / Forgot) ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:32px}
+.tab{
+  flex:1;text-align:center;
+  padding:10px;
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:all .2s;margin-bottom:-1px;
+}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── Form ── */
+.panel{display:none}
+.panel.active{display:block}
+
+.field{margin-bottom:20px}
+.label{
+  display:block;
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:8px;font-weight:600;
+}
+.input{
+  width:100%;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 14px;
+  color:var(--text);
+  font-family:'Raleway',sans-serif;
+  font-size:14px;outline:none;
+  transition:border-color .2s;
+}
+.input:focus{border-color:var(--gold)}
+.input::placeholder{color:var(--muted);opacity:.7}
+
+/* Password field wrapper */
+.pw-wrap{position:relative}
+.pw-wrap .input{padding-right:44px}
+.pw-toggle{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  font-size:16px;padding:4px;line-height:1;
+}
+.pw-toggle:hover{color:var(--gold)}
+
+/* ── Button ── */
+.btn{
+  width:100%;padding:13px;
+  background:transparent;
+  border:1px solid var(--gold);
+  border-radius:8px;
+  color:var(--gold);
+  font-family:'Raleway',sans-serif;
+  font-size:11px;font-weight:600;
+  letter-spacing:.2em;text-transform:uppercase;
+  cursor:pointer;transition:all .22s;
+  margin-top:8px;
+}
+.btn:hover:not(:disabled){background:var(--gold);color:var(--dark)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── Messages ── */
+.msg{
+  font-size:13px;text-align:center;
+  padding:10px 14px;border-radius:6px;
+  margin-bottom:16px;display:none;line-height:1.5;
+}
+.msg.error{background:rgba(224,112,112,0.12);color:var(--error);border:1px solid rgba(224,112,112,0.25)}
+.msg.success{background:rgba(109,191,138,0.12);color:var(--success);border:1px solid rgba(109,191,138,0.25)}
+.msg.show{display:block}
+
+/* ── Footer note ── */
+.note{
+  text-align:center;margin-top:20px;
+  font-size:11px;color:var(--muted);line-height:1.6;
+}
+.note a{color:var(--gold);text-decoration:none}
+.note a:hover{text-decoration:underline}
+
+/* ── Divider ── */
+.divider{
+  height:1px;
+  background:linear-gradient(to right,transparent,var(--border),transparent);
+  margin:24px 0;
+}
+
+/* ── Spinner ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{
+  display:inline-block;width:14px;height:14px;
+  border:2px solid rgba(201,168,76,.3);
+  border-top-color:var(--gold);
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  vertical-align:middle;margin-right:6px;
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-glyph">A</div>
+    <div class="brand-name">Astro Annie</div>
+    <div class="brand-sub">Admin Panel</div>
+  </div>
+
+  <!-- Card -->
+  <div class="card">
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
+      <div class="tab" id="tab-forgot" onclick="switchTab('forgot')">Forgot Password</div>
+    </div>
+
+    <!-- ── LOGIN PANEL ── -->
+    <div class="panel active" id="panel-login">
+      <div class="msg" id="login-msg"></div>
+
+      <div class="field">
+        <label class="label" for="login-user">Username or Email</label>
+        <input class="input" id="login-user" type="text" placeholder="admin" autocomplete="username"/>
+      </div>
+
+      <div class="field">
+        <label class="label" for="login-pass">Password</label>
+        <div class="pw-wrap">
+          <input class="input" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+          <button class="pw-toggle" type="button" onclick="togglePw('login-pass',this)" title="Show/hide password">👁</button>
+        </div>
+      </div>
+
+      <button class="btn" id="login-btn" onclick="doLogin()">Sign In →</button>
+
+      <div class="note" style="margin-top:16px">
+        <a href="#" onclick="switchTab('forgot');return false">Forgot your password?</a>
+      </div>
+    </div>
+
+    <!-- ── FORGOT PASSWORD PANEL ── -->
+    <div class="panel" id="panel-forgot">
+      <div class="msg" id="forgot-msg"></div>
+
+      <!-- Step 1: Enter email -->
+      <div id="forgot-step1">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6">
+          Enter your registered email. We'll send a reset code.
+        </p>
+        <div class="field">
+          <label class="label" for="forgot-email">Email address</label>
+          <input class="input" id="forgot-email" type="email" placeholder="you@gmail.com"/>
+        </div>
+        <button class="btn" id="forgot-btn" onclick="doForgot()">Send Reset Code →</button>
+      </div>
+
+      <!-- Step 2: Enter OTP + new password -->
+      <div id="forgot-step2" style="display:none">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6">
+          Enter the 6-digit code sent to your email and choose a new password.
+        </p>
+        <div class="field">
+          <label class="label" for="reset-code">Reset Code</label>
+          <input class="input" id="reset-code" type="text" placeholder="123456" maxlength="6" style="letter-spacing:.2em;font-size:18px;text-align:center"/>
+        </div>
+        <div class="field">
+          <label class="label" for="new-pass">New Password</label>
+          <div class="pw-wrap">
+            <input class="input" id="new-pass" type="password" placeholder="Minimum 8 characters"/>
+            <button class="pw-toggle" type="button" onclick="togglePw('new-pass',this)" title="Show/hide">👁</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label" for="confirm-pass">Confirm Password</label>
+          <div class="pw-wrap">
+            <input class="input" id="confirm-pass" type="password" placeholder="Repeat password"/>
+            <button class="pw-toggle" type="button" onclick="togglePw('confirm-pass',this)" title="Show/hide">👁</button>
+          </div>
+        </div>
+        <button class="btn" id="reset-btn" onclick="doReset()">Reset Password →</button>
+        <div class="note">
+          <a href="#" onclick="doForgot();return false">Resend code</a>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="note">
+        <a href="#" onclick="switchTab('login');return false">← Back to Sign In</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:20px">
+    Astro Annie Admin · Protected area
+  </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000/api';
+
+/* ── If already logged in, go to dashboard ── */
+if(sessionStorage.getItem('admin_token')){
+  window.location.href = 'Dashboard.html';
+}
+
+/* ── Tab switcher ── */
+function switchTab(tab){
+  document.querySelectorAll('.tab,.panel').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  clearMsgs();
+}
+
+function clearMsgs(){
+  document.querySelectorAll('.msg').forEach(m=>{m.className='msg';m.textContent='';});
+}
+
+function showMsg(id, text, type){
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `msg ${type} show`;
+}
+
+/* ── Password toggle ── */
+function togglePw(inputId, btn){
+  const inp = document.getElementById(inputId);
+  if(inp.type==='password'){inp.type='text'; btn.textContent='🙈';}
+  else{inp.type='password'; btn.textContent='👁';}
+}
+
+/* ── LOGIN ── */
+async function doLogin(){
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const btn = document.getElementById('login-btn');
+
+  if(!username||!password){
+    showMsg('login-msg','Please enter username and password.','error'); return;
+  }
+
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Signing in…';
+  clearMsgs();
+
+  try{
+    const r = await fetch(`${API}/auth/login/`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username, password}),
+    });
+    const data = await r.json();
+
+    if(!r.ok){
+      showMsg('login-msg', data.error||'Invalid username or password.','error');
+      return;
+    }
+
+    // Save token and redirect
+    sessionStorage.setItem('admin_token', data.token);
+    sessionStorage.setItem('admin_user', data.username);
+    sessionStorage.setItem('admin_role', data.role || 'admin');
+    window.location.href = 'Dashboard.html';
+
+  }catch{
+    showMsg('login-msg','Cannot connect to server. Is backend running?','error');
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='Sign In →';
+  }
+}
+
+/* ── FORGOT PASSWORD — send OTP ── */
+async function doForgot(){
+  const email = document.getElementById('forgot-email').value.trim();
+  const btn = document.getElementById('forgot-btn');
+
+  if(!email){showMsg('forgot-msg','Please enter your email.','error'); return;}
+
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Sending…';
+  clearMsgs();
+
+  try{
+    const r = await fetch(`${API}/auth/forgot-password/`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email}),
+    });
+    const data = await r.json();
+
+    if(!r.ok){
+      showMsg('forgot-msg', data.error||'Email not found.','error'); return;
+    }
+
+    showMsg('forgot-msg','Reset code sent! Check your email inbox.','success');
+    document.getElementById('forgot-step1').style.display='none';
+    document.getElementById('forgot-step2').style.display='';
+
+  }catch{
+    showMsg('forgot-msg','Cannot connect to server.','error');
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='Send Reset Code →';
+  }
+}
+
+/* ── RESET PASSWORD ── */
+async function doReset(){
+  const email   = document.getElementById('forgot-email').value.trim();
+  const code    = document.getElementById('reset-code').value.trim();
+  const pass1   = document.getElementById('new-pass').value;
+  const pass2   = document.getElementById('confirm-pass').value;
+  const btn     = document.getElementById('reset-btn');
+
+  if(!code){showMsg('forgot-msg','Please enter the reset code.','error'); return;}
+  if(pass1.length<8){showMsg('forgot-msg','Password must be at least 8 characters.','error'); return;}
+  if(pass1!==pass2){showMsg('forgot-msg','Passwords do not match.','error'); return;}
+
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Resetting…';
+  clearMsgs();
+
+  try{
+    const r = await fetch(`${API}/auth/reset-password/`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email, code, new_password:pass1}),
+    });
+    const data = await r.json();
+
+    if(!r.ok){
+      showMsg('forgot-msg', data.error||'Invalid or expired code.','error'); return;
+    }
+
+    showMsg('forgot-msg','Password reset! Redirecting to login…','success');
+    setTimeout(()=>switchTab('login'), 2000);
+
+  }catch{
+    showMsg('forgot-msg','Cannot connect to server.','error');
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='Reset Password →';
+  }
+}
+
+/* ── Enter key support ── */
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Enter') return;
+  const loginActive = document.getElementById('panel-login').classList.contains('active');
+  if(loginActive) doLogin();
+});
+</script>
+</body>
+</html>

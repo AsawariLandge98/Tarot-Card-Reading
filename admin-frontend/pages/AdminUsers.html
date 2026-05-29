@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Manage Admins — Astro Annie</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../_shared.css"/>
+<script>
+(function(){
+  if(!sessionStorage.getItem('admin_token')){ window.location.replace('../login.html'); return; }
+  if(sessionStorage.getItem('admin_role')!=='superuser'){ window.location.replace('Dashboard.html'); }
+})();
+</script>
+<style>
+.page-wrap{max-width:860px;margin:0 auto}
+.card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:28px 32px;box-shadow:var(--sh-sm);margin-bottom:20px}
+.card-title{font-family:'Cinzel',serif;font-size:15px;font-weight:600;margin-bottom:20px;padding-bottom:12px;border-bottom:.5px solid var(--border)}
+.field{margin-bottom:16px}
+.lbl{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--purple);font-weight:700;margin-bottom:7px}
+.inp{width:100%;background:var(--bg);border:.5px solid var(--border-md);border-radius:8px;padding:11px 14px;font-family:'Raleway',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;box-sizing:border-box}
+.inp:focus{border-color:var(--purple)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.msg{font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:14px;display:none}
+.msg.error{background:rgba(196,94,126,.1);color:#8A2A4C;border:.5px solid rgba(196,94,126,.3)}
+.msg.success{background:rgba(29,158,117,.1);color:#1D6B5F;border:.5px solid rgba(29,158,117,.3)}
+.msg.show{display:block}
+.admin-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:.5px solid var(--border)}
+.admin-row:last-child{border-bottom:none}
+.admin-info{flex:1}
+.admin-name{font-size:13px;font-weight:600;color:var(--text)}
+.admin-email{font-size:11px;color:var(--text-3);margin-top:2px}
+.role-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.05em}
+.rb-super{background:rgba(201,168,76,.15);color:#7A5A00}
+.rb-admin{background:rgba(107,79,160,.1);color:#4A2E7A}
+.del-btn{width:28px;height:28px;border-radius:7px;border:.5px solid var(--border-md);background:transparent;cursor:pointer;color:var(--text-3);font-size:13px;display:flex;align-items:center;justify-content:center;transition:.13s}
+.del-btn:hover{background:rgba(196,94,126,.08);color:#C45E7E;border-color:rgba(196,94,126,.3)}
+.pw-wrap{position:relative}
+.pw-wrap .inp{padding-right:40px}
+.pw-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);font-size:15px}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon" style="background:linear-gradient(135deg,#C9A84C,#E8CC85);font-family:'Cinzel',serif;font-size:16px;color:#3D2800;font-weight:700">A</div>
+    <div><div class="sb-brand">Astro Annie</div><div class="sb-sub">Admin Portal</div></div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Main</div>
+    <a class="nav-a" href="../dashboard.html"><span class="nav-ic">✦</span>Dashboard</a>
+    <a class="nav-a" href="bookings.html"><span class="nav-ic">📅</span>Bookings</a>
+    <a class="nav-a" href="inquiry.html"><span class="nav-ic">💌</span>Inquiries</a>
+    <a class="nav-a" href="slots.html"><span class="nav-ic">🗓</span>Manage Slots</a>
+    <div class="sb-label">Superuser</div>
+    <a class="nav-a active" href="AdminUsers.html"><span class="nav-ic">👥</span>Manage Admins</a>
+    <div class="sb-label">Settings</div>
+    <a class="nav-a" href="#"><span class="nav-ic">⚙️</span>Settings</a>
+  </div>
+  <div class="sb-bottom"><a class="nav-a" onclick="doLogout()" style="cursor:pointer"><span class="nav-ic">⬡</span>Logout</a></div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div style="font-family:'Cinzel',serif;font-size:15px;font-weight:600">Manage Admins</div>
+    <div class="tb-right">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div class="tb-avatar" id="tbAvatar">S</div>
+        <div class="tb-info"><div class="name" id="tbName">—</div><div class="role" style="color:#C9A84C;font-weight:700">⭐ Superuser</div></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-wrap">
+      <!-- Add new admin -->
+      <div class="card">
+        <div class="card-title">➕ Add New Admin</div>
+        <div class="msg" id="addMsg"></div>
+        <div class="grid2">
+          <div class="field">
+            <label class="lbl">Username *</label>
+            <input class="inp" id="newUsername" type="text" placeholder="admin_username"/>
+          </div>
+          <div class="field">
+            <label class="lbl">Email *</label>
+            <input class="inp" id="newEmail" type="email" placeholder="admin@email.com"/>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label class="lbl">Temporary Password *</label>
+            <div class="pw-wrap">
+              <input class="inp" id="newPassword" type="password" placeholder="Min 8 characters"/>
+              <button class="pw-eye" type="button" onclick="togglePw('newPassword',this)">👁</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="lbl">Full Name</label>
+            <input class="inp" id="newFullName" type="text" placeholder="Optional"/>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Admin will be asked to change password on first login.</p>
+        <button class="btn-primary" onclick="addAdmin()">+ Create Admin</button>
+      </div>
+
+      <!-- Admin list -->
+      <div class="card">
+        <div class="card-title">👥 All Admins & Superusers</div>
+        <div id="adminList"><div class="empty-state">Loading…</div></div>
+      </div>
+
+      <!-- Change password -->
+      <div class="card">
+        <div class="card-title">🔑 Change Admin Password</div>
+        <div class="msg" id="pwMsg"></div>
+        <div class="grid2">
+          <div class="field">
+            <label class="lbl">Username</label>
+            <input class="inp" id="pwUsername" type="text" placeholder="admin_username"/>
+          </div>
+          <div class="field">
+            <label class="lbl">New Password *</label>
+            <div class="pw-wrap">
+              <input class="inp" id="pwNew" type="password" placeholder="Min 8 characters"/>
+              <button class="pw-eye" type="button" onclick="togglePw('pwNew',this)">👁</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="changePassword()">Update Password</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://127.0.0.1:8000/api';
+const adminUser = sessionStorage.getItem('admin_user') || 'Superuser';
+document.getElementById('tbName').textContent = adminUser;
+document.getElementById('tbAvatar').textContent = adminUser.slice(0,2).toUpperCase();
+
+function doLogout(){ sessionStorage.clear(); window.location.replace('../login.html'); }
+function toast(msg,ok=true){ const t=document.getElementById('toast'); t.textContent=msg; t.style.borderLeftColor=ok?'var(--gold)':'#C45E7E'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
+function showMsg(id,msg,type){ const el=document.getElementById(id); el.textContent=msg; el.className='msg '+type+' show'; }
+function togglePw(id,btn){ const i=document.getElementById(id); i.type=i.type==='password'?'text':'password'; btn.textContent=i.type==='password'?'👁':'🙈'; }
+
+async function loadAdmins(){
+  try{
+    const r = await fetch(`${API}/auth/admins/`, { headers:{'Authorization': sessionStorage.getItem('admin_token')} });
+    const data = await r.json();
+    const el = document.getElementById('adminList');
+    if(!data.length){ el.innerHTML='<div class="empty-state">No admins found</div>'; return; }
+    el.innerHTML = data.map(u=>`
+      <div class="admin-row">
+        <div class="av" style="background:linear-gradient(135deg,${u.is_superuser?'#C9A84C,#E8CC85':'#6B4FA0,#9B7FCA'});${u.is_superuser?'color:#3D2800':''}">
+          ${(u.username||'?').slice(0,2).toUpperCase()}
+        </div>
+        <div class="admin-info">
+          <div class="admin-name">${u.username} ${u.is_superuser?'<span style="color:#C9A84C">⭐</span>':''}</div>
+          <div class="admin-email">${u.email||'—'}</div>
+        </div>
+        <span class="role-badge ${u.is_superuser?'rb-super':'rb-admin'}">${u.is_superuser?'Superuser':'Admin'}</span>
+        ${!u.is_superuser?`<button class="del-btn" onclick="deleteAdmin(${u.id},'${u.username}')" title="Remove admin">✕</button>`:''}
+      </div>`).join('');
+  }catch(e){
+    document.getElementById('adminList').innerHTML='<div class="empty-state">Could not load admins</div>';
+  }
+}
+
+async function addAdmin(){
+  const username = document.getElementById('newUsername').value.trim();
+  const email    = document.getElementById('newEmail').value.trim();
+  const password = document.getElementById('newPassword').value;
+  const name     = document.getElementById('newFullName').value.trim();
+  if(!username||!email||!password){ showMsg('addMsg','Please fill username, email and password.','error'); return; }
+  if(password.length<8){ showMsg('addMsg','Password must be at least 8 characters.','error'); return; }
+  try{
+    const r = await fetch(`${API}/auth/admins/create/`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization': sessionStorage.getItem('admin_token')},
+      body: JSON.stringify({username, email, password, full_name:name})
+    });
+    const data = await r.json();
+    if(!r.ok){ showMsg('addMsg', data.error||'Failed to create admin.','error'); return; }
+    showMsg('addMsg', `✓ Admin "${username}" created successfully!`,'success');
+    document.getElementById('newUsername').value='';
+    document.getElementById('newEmail').value='';
+    document.getElementById('newPassword').value='';
+    document.getElementById('newFullName').value='';
+    loadAdmins();
+  }catch(e){ showMsg('addMsg','Server error.','error'); }
+}
+
+async function deleteAdmin(id, username){
+  if(!confirm(`Remove admin "${username}"? They will lose admin access.`)) return;
+  try{
+    const r = await fetch(`${API}/auth/admins/${id}/delete/`, {
+      method:'DELETE',
+      headers:{'Authorization': sessionStorage.getItem('admin_token')}
+    });
+    if(!r.ok) throw new Error();
+    toast(`✓ ${username} removed`);
+    loadAdmins();
+  }catch(e){ toast('Failed to remove admin',false); }
+}
+
+async function changePassword(){
+  const username = document.getElementById('pwUsername').value.trim();
+  const password = document.getElementById('pwNew').value;
+  if(!username||!password){ showMsg('pwMsg','Please fill all fields.','error'); return; }
+  if(password.length<8){ showMsg('pwMsg','Password must be at least 8 characters.','error'); return; }
+  try{
+    const r = await fetch(`${API}/auth/admins/change-password/`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization': sessionStorage.getItem('admin_token')},
+      body: JSON.stringify({username, new_password:password})
+    });
+    const data = await r.json();
+    if(!r.ok){ showMsg('pwMsg', data.error||'Failed.','error'); return; }
+    showMsg('pwMsg', `✓ Password updated for "${username}"`, 'success');
+    document.getElementById('pwUsername').value='';
+    document.getElementById('pwNew').value='';
+  }catch(e){ showMsg('pwMsg','Server error.','error'); }
+}
+
+loadAdmins();
+</script>
+</body>
+</html>

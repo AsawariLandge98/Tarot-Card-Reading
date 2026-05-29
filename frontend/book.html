@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Book a Reading — Astro Annie</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Same stylesheets as index.html -->
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="styles-day.css"/>
+
+<style>
+/* ── Page layout ── */
+.bk-wrap {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  padding-top: 100px;   /* clear the fixed top-bar */
+  padding-bottom: 80px;
+}
+
+.bk-container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 6vw;
+}
+
+/* ── Page header ── */
+.bk-hero {
+  text-align: center;
+  padding: 60px 0 56px;
+  border-bottom: 1px solid oklch(0.55 0.13 65 / 0.22);
+  margin-bottom: 56px;
+}
+.bk-hero .rp-eyebrow {
+  margin-bottom: 18px;
+}
+.bk-hero-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(36px, 5vw, 62px);
+  color: var(--ivory);
+  line-height: 1.08;
+  margin: 0 0 18px;
+}
+.bk-hero-sub {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--ivory-mu);
+  line-height: 1.55;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* ── Form card ── */
+.bk-card {
+  background: oklch(1 0 0 / 0.03);
+  border: 1px solid oklch(0.55 0.13 65 / 0.22);
+  border-radius: 16px;
+  padding: 48px 52px;
+}
+@media (max-width: 600px) {
+  .bk-card { padding: 28px 20px; }
+}
+
+/* ── Section dividers inside form ── */
+.bk-section-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid oklch(0.55 0.13 65 / 0.18);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.bk-section-label::before {
+  content: '✦';
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.bk-section {
+  margin-bottom: 36px;
+}
+
+/* ── Field grid ── */
+.bk-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.bk-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 680px) {
+  .bk-grid-2, .bk-grid-3 { grid-template-columns: 1fr; }
+}
+
+/* ── Field wrapper ── */
+.bk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.bk-field.full { grid-column: 1 / -1; }
+
+/* ── Label ── */
+.bk-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.bk-label .req { color: var(--ivory-mu); margin-left: 2px; font-style: italic; }
+
+/* ── Inputs / selects / textarea ── */
+.bk-input, .bk-select, .bk-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #f5efe6;
+  border: 1px solid rgba(200,144,47,0.32);
+  border-radius: 8px;
+  padding: 12px 15px;
+  color: #2e1f0f;
+  font-family: var(--font-body);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.bk-input::placeholder, .bk-textarea::placeholder {
+  color: #8a7060;
+  opacity: 0.85;
+}
+.bk-input:focus, .bk-select:focus, .bk-textarea:focus {
+  border-color: var(--gold);
+  background: #fdf7ee;
+}
+.bk-select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c8902f' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-color: #f5efe6;
+  padding-right: 38px;
+}
+.bk-select option {
+  background: #f5efe6;
+  color: #2e1f0f;
+}
+.bk-textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.65;
+}
+
+/* ── Slot status pill ── */
+.bk-slot-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+  font-weight: 500;
+  margin-top: 4px;
+}
+.bk-no-slots {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--ivory-mu);
+  font-size: 14px;
+  padding: 16px 0;
+  text-align: center;
+  line-height: 1.6;
+}
+.bk-no-slots a { color: var(--gold); text-decoration: none; }
+
+/* ── Divider ── */
+.bk-divider {
+  height: 1px;
+  background: linear-gradient(to right,
+    oklch(0.55 0.13 65 / 0.3) 0%,
+    transparent 100%);
+  margin: 32px 0;
+}
+
+/* ── Submit area ── */
+.bk-submit-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.bk-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 14px 38px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.22s, color 0.22s;
+}
+.bk-submit-btn:hover:not(:disabled) {
+  background: var(--gold);
+  color: oklch(0.12 0.03 80);
+}
+.bk-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.bk-wa-link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ivory-mu);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.bk-wa-link:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+.bk-form-note {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ivory-mu);
+  margin-top: 14px;
+  line-height: 1.6;
+  opacity: 0.75;
+}
+
+/* ── Error / loading states ── */
+.bk-error {
+  color: #c06060;
+  font-family: var(--font-body);
+  font-size: 13px;
+  margin-top: 8px;
+}
+.bk-loading {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--ivory-mu);
+  font-size: 15px;
+  padding: 12px 0;
+}
+
+/* ── Success state ── */
+.bk-success {
+  text-align: center;
+  padding: 60px 24px;
+}
+.bk-success-glyph {
+  font-family: var(--font-display);
+  font-size: 52px;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 24px;
+  display: block;
+}
+.bk-success-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 30px;
+  color: var(--ivory);
+  margin: 0 0 14px;
+}
+.bk-success-sub {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--ivory-mu);
+  font-size: 17px;
+  line-height: 1.65;
+  margin-bottom: 28px;
+}
+.bk-success-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-decoration: none;
+  border-bottom: 1px solid oklch(0.55 0.13 65 / 0.4);
+  padding-bottom: 2px;
+}
+.bk-success-back:hover { border-bottom-color: var(--gold); }
+
+/* ── Below-form note strip ── */
+.bk-assurance {
+  display: flex;
+  gap: 36px;
+  flex-wrap: wrap;
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid oklch(0.55 0.13 65 / 0.15);
+  justify-content: center;
+}
+.bk-assurance-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.bk-assurance-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.bk-assurance-text {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ivory-mu);
+  line-height: 1.55;
+}
+.bk-assurance-text strong {
+  display: block;
+  color: var(--ivory);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+</style>
+</head>
+<body>
+
+<!-- Background: same velvet layer as index.html -->
+<div class="velvet"></div>
+
+<!-- ── Top bar — identical to index.html ── -->
+<div class="top-bar">
+  <a class="mark" href="index.html" style="text-decoration:none">
+    <div class="mark-glyph">A</div>
+    <div class="mark-name">Astro Annie</div>
+    <div class="mark-domain">astroanjilina.com</div>
+  </a>
+  <nav class="nav-actions">
+    <a href="index.html">Home</a>
+    
+    <button class="book-btn" onclick="window.location.href='book.html'">Book</button>
+  </nav>
+</div>
+
+<!-- ── Main content ── -->
+<div class="bk-wrap">
+  <div class="bk-container">
+
+    <!-- Hero header -->
+    <div class="bk-hero">
+      <div class="rp-eyebrow">Reserve your session</div>
+      <h1 class="bk-hero-title">
+        Book a Reading<br/>
+        <span class="serif-italic">with Astro Annie.</span>
+      </h1>
+      <p class="bk-hero-sub">
+        Choose an open slot, share a little about yourself, and we'll confirm within the day.
+        No payment now — just your details and a preferred time.
+      </p>
+    </div>
+
+    <!-- Form card -->
+    <div class="bk-card" id="booking-card">
+      <!-- Success state (hidden until submit) -->
+      <div class="bk-success" id="success-state" style="display:none">
+        <span class="bk-success-glyph">✦</span>
+        <h2 class="bk-success-title">Shukriya. Booking received.</h2>
+        <p class="bk-success-sub">
+          Thank you for reaching out to Astro Annie. 🙏<br/><br/>
+          Your booking request has been received.<br/>
+          Annie ji will confirm your slot via <strong>WhatsApp or email</strong> within a few hours.<br/><br/>
+          A confirmation email has been sent to your inbox.
+        </p>
+        <div style="margin:28px 0;padding:20px 24px;background:rgba(200,144,47,0.08);border:1px solid rgba(200,144,47,0.25);border-radius:10px;text-align:left">
+          <div id="success-summary" style="font-family:var(--font-body);font-size:14px;color:var(--ivory);line-height:2"></div>
+        </div>
+        <a class="bk-success-back" href="index.html">← Back to home</a>
+      </div>
+
+      <!-- The form -->
+      <form id="booking-form" onsubmit="handleSubmit(event)" novalidate>
+
+        <!-- ── SECTION 1: Slot Selection ── -->
+        <div class="bk-section">
+          <div class="bk-section-label">Choose Your Slot</div>
+          <div id="slots-loading" class="bk-loading">Loading available dates…</div>
+          <div id="slots-error" class="bk-no-slots" style="display:none">
+            No open slots right now. <a href="https://wa.me/918178973198">WhatsApp Annie ji →</a>
+          </div>
+
+          <div id="slots-fields" style="display:none">
+            <div class="bk-grid-2" style="margin-bottom:16px">
+              <!-- Date -->
+              <div class="bk-field">
+                <label class="bk-label" for="bk-date">
+                  Date <span class="req">*</span>
+                </label>
+                <select class="bk-select" id="bk-date" onchange="onDateChange()" required>
+                  <option value="">— Choose a date —</option>
+                </select>
+                <div class="bk-slot-count" id="date-count"></div>
+              </div>
+
+              <!-- Time -->
+              <div class="bk-field">
+                <label class="bk-label" for="bk-time">
+                  Time <span class="req">*</span>
+                </label>
+                <select class="bk-select" id="bk-time" required disabled>
+                  <option value="">— Choose a time —</option>
+                </select>
+                <div class="bk-slot-count" id="time-count"></div>
+              </div>
+            </div>
+
+            <!-- Reading type -->
+            <div class="bk-field">
+              <label class="bk-label" for="bk-reading-type">
+                Purpose / Reading type <span class="req">*</span>
+              </label>
+              <select class="bk-select" id="bk-reading-type" required>
+                <option value="">— What would you like? —</option>
+                <option>Three Card</option>
+                <option>Celtic Cross</option>
+                <option>Love Reading</option>
+                <option>Career Path</option>
+                <option>Year Ahead</option>
+                <option>Full Spread</option>
+                <option>Numerology</option>
+                <option>Lal Kitab</option>
+                <option>Vastu</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="bk-divider" id="divider-1" style="display:none"></div>
+
+        <!-- ── SECTION 2: Your Details ── -->
+        <div class="bk-section" id="section-details" style="display:none">
+          <div class="bk-section-label">Your Details</div>
+
+          <div class="bk-grid-2" style="margin-bottom:16px">
+            <div class="bk-field">
+              <label class="bk-label" for="bk-name">Full name <span class="req">*</span></label>
+              <input class="bk-input" type="text" id="bk-name" placeholder="Your name" required/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="bk-dob">Date of birth <span class="req">*</span></label>
+              <input class="bk-input" type="date" id="bk-dob" required/>
+            </div>
+          </div>
+
+          <div class="bk-grid-2" style="margin-bottom:16px">
+            <div class="bk-field">
+              <label class="bk-label" for="bk-email">Email <span class="req">*</span></label>
+              <input class="bk-input" type="email" id="bk-email" placeholder="you@example.com" required/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="bk-phone">WhatsApp / Phone</label>
+              <input class="bk-input" type="tel" id="bk-phone" placeholder="+91 _____ _____"/>
+            </div>
+          </div>
+
+          <div class="bk-grid-2">
+            <div class="bk-field">
+              <label class="bk-label" for="bk-location">Your city / location</label>
+              <input class="bk-input" type="text" id="bk-location" placeholder="e.g. Mumbai, London, Online"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="bk-mode">Session mode</label>
+              <select class="bk-select" id="bk-mode">
+                <option value="">— Prefer how? —</option>
+                <option>WhatsApp Call (Voice)</option>
+                <option>WhatsApp Call (Video)</option>
+                <option>In-person (Chattarpur Studio)</option>
+                <option>No preference</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SECTION 3: What's on your mind ── -->
+        <div class="bk-section" id="section-purpose" style="display:none">
+          <div class="bk-section-label">What Brings You Here</div>
+          <div class="bk-field">
+            <label class="bk-label" for="bk-notes">
+              Tell Annie ji what you'd like guidance on
+            </label>
+            <textarea
+              class="bk-textarea"
+              id="bk-notes"
+              placeholder="Share anything that's on your mind — a question, a situation, a phase you're navigating. Even a single word is enough. This helps Annie ji come prepared."
+              rows="4"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Error message -->
+        <div class="bk-error" id="form-error" style="display:none"></div>
+
+        <!-- Submit -->
+        <div class="bk-submit-row" id="submit-row" style="display:none">
+          <button type="submit" class="bk-submit-btn" id="submit-btn">
+            <span>✦</span> Confirm Booking Request
+          </button>
+          <a
+            class="bk-wa-link"
+            href="https://wa.me/918178973198?text=Namaste%20Annie%20Ji%2C%20I%20would%20like%20to%20book%20a%20reading"
+            target="_blank" rel="noopener"
+          >Or book on WhatsApp →</a>
+        </div>
+
+        <p class="bk-form-note" id="form-note" style="display:none">
+          No payment needed now · Slot confirmed within a few hours · Free to reschedule
+        </p>
+      </form>
+    </div>
+
+    <!-- Assurance strip -->
+    <div class="bk-assurance">
+      <div class="bk-assurance-item">
+        <div class="bk-assurance-icon">🔒</div>
+        <div class="bk-assurance-text">
+          <strong>Fully confidential</strong>
+          What you share stays at the table. Always.
+        </div>
+      </div>
+      <div class="bk-assurance-item">
+        <div class="bk-assurance-icon">📅</div>
+        <div class="bk-assurance-text">
+          <strong>Confirmed same day</strong>
+          Annie ji or the studio replies within a few hours.
+        </div>
+      </div>
+      <div class="bk-assurance-item">
+        <div class="bk-assurance-icon">💬</div>
+        <div class="bk-assurance-text">
+          <strong>Hindi & English</strong>
+          Whatever's closer to your heart — Annie reads in both.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /bk-container -->
+</div><!-- /bk-wrap -->
+
+<!-- ── Footer — same as index.html ── -->
+<footer class="footer-band" style="position:relative;z-index:2">
+  <div class="footer-inner">
+    <div>
+      <div class="eyebrow" style="margin-bottom:14px">The Studio</div>
+      <h3 class="footer-headline">
+        The cards are waiting.<br/>
+        <span class="em">Come sit down.</span>
+      </h3>
+    </div>
+    <div class="footer-col">
+      <h4>Visit</h4>
+      <p>20–21 Flat A-2, UGF<br/>
+      Ramchander Market, Gali No. 1<br/>
+      Rajpur Khurd Extension, Chattarpur<br/>
+      New Delhi — 110068</p>
+    </div>
+    <div class="footer-col">
+      <h4>Reach</h4>
+      <a href="https://wa.me/918178973198" target="_blank" rel="noopener">+91 81789 73198</a>
+      <a href="mailto:hello@astroanjilina.com">hello@astroanjilina.com</a>
+      <a href="https://astroanjilina.com">astroanjilina.com</a>
+    </div>
+  </div>
+  <div class="footer-sig">
+    <span>© Anjlina Singh Marwaha · <span id="yr"></span></span>
+    <span>Jyotish Star Award · 2026</span>
+  </div>
+</footer>
+
+<script>
+const BACKEND = 'http://127.0.0.1:8000/api';
+let ALL_SLOTS = [];
+
+/* ── Helpers ── */
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+}
+function fmtTime(t) {
+  if (!t) return '—';
+  const [h, m] = t.split(':');
+  const hh = parseInt(h);
+  return `${hh > 12 ? hh - 12 : hh || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
+}
+
+/* ── Show form sections progressively ── */
+function showFormSections() {
+  document.getElementById('divider-1').style.display      = '';
+  document.getElementById('section-details').style.display = '';
+  document.getElementById('section-purpose').style.display = '';
+  document.getElementById('submit-row').style.display      = '';
+  document.getElementById('form-note').style.display       = '';
+}
+
+/* ── Load available slots ── */
+async function loadSlots() {
+  // Show form immediately — don't wait for slots
+  showFormSections();
+
+  // Fetch slots with 4 second timeout
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
+
+  try {
+    const r = await fetch(`${BACKEND}/slots/?open=1`, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!r.ok) throw new Error();
+    ALL_SLOTS = await r.json();
+
+    const loadEl = document.getElementById('slots-loading');
+    const errEl  = document.getElementById('slots-error');
+    const fldEl  = document.getElementById('slots-fields');
+
+    loadEl.style.display = 'none';
+
+    if (!ALL_SLOTS.length) {
+      errEl.style.display = '';
+      return;
+    }
+
+    // Populate date dropdown
+    const dateSelect = document.getElementById('bk-date');
+    const uniqueDates = [...new Set(ALL_SLOTS.map(s => s.date))].sort();
+    uniqueDates.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = fmtDate(d);
+      dateSelect.appendChild(opt);
+    });
+
+    document.getElementById('date-count').textContent =
+      `${uniqueDates.length} date${uniqueDates.length > 1 ? 's' : ''} available`;
+
+    fldEl.style.display = '';
+
+  } catch {
+    clearTimeout(timer);
+    document.getElementById('slots-loading').style.display = 'none';
+    document.getElementById('slots-error').style.display   = '';
+  }
+}
+
+/* ── Date change → populate times ── */
+function onDateChange() {
+  const date     = document.getElementById('bk-date').value;
+  const timeSel  = document.getElementById('bk-time');
+  const timeCount = document.getElementById('time-count');
+
+  // Clear existing options
+  timeSel.innerHTML = '<option value="">— Choose a time —</option>';
+  timeSel.disabled  = true;
+  timeCount.textContent = '';
+
+  if (!date) return;
+
+  const times = ALL_SLOTS
+    .filter(s => s.date === date)
+    .map(s => s.time)
+    .sort();
+
+  times.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = fmtTime(t);
+    timeSel.appendChild(opt);
+  });
+
+  timeSel.disabled = false;
+  timeCount.textContent = `${times.length} slot${times.length > 1 ? 's' : ''} open`;
+}
+
+/* ── Form submit ── */
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  const errEl = document.getElementById('form-error');
+  errEl.style.display = 'none';
+
+  // Collect values
+  const date        = document.getElementById('bk-date').value;
+  const time        = document.getElementById('bk-time').value;
+  const readingType = document.getElementById('bk-reading-type').value;
+  const name        = document.getElementById('bk-name').value.trim();
+  const dob         = document.getElementById('bk-dob').value;
+  const email       = document.getElementById('bk-email').value.trim();
+  const phone       = document.getElementById('bk-phone').value.trim();
+  const userCity    = document.getElementById('bk-location').value.trim();
+  const mode        = document.getElementById('bk-mode').value;
+  const notes_raw   = document.getElementById('bk-notes').value.trim();
+
+  // Only name, dob, email always required
+  if (!name || !dob || !email) {
+    errEl.textContent = 'Please fill in Name, Date of Birth and Email.';
+    errEl.style.display = '';
+    return;
+  }
+  // date/time + reading type required only if slots are available
+  if (ALL_SLOTS.length > 0 && (!date || !time || !readingType)) {
+    errEl.textContent = 'Please select date, time and reading type.';
+    errEl.style.display = '';
+    return;
+  }
+
+  // Build notes string including extra fields
+  const noteParts = [];
+  if (userCity) noteParts.push(`Location: ${userCity}`);
+  if (mode)     noteParts.push(`Preferred mode: ${mode}`);
+  if (dob)      noteParts.push(`Date of birth: ${dob}`);
+  if (notes_raw) noteParts.push(notes_raw);
+  const notes = noteParts.join(' | ');
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>…</span> Submitting';
+
+  // Build success summary
+  const summaryLines = [
+    name        ? `<div>👤 <strong>Name</strong> &nbsp;&nbsp;&nbsp;${name}</div>` : '',
+    email       ? `<div>📧 <strong>Email</strong> &nbsp;&nbsp;${email}</div>` : '',
+    readingType ? `<div>🔮 <strong>Reading</strong> &nbsp;${readingType}</div>` : '',
+    date        ? `<div>📅 <strong>Date</strong> &nbsp;&nbsp;&nbsp;${fmtDate(date)}</div>` : '',
+    time        ? `<div>🕐 <strong>Time</strong> &nbsp;&nbsp;&nbsp;${fmtTime(time)}</div>` : '',
+  ].filter(Boolean).join('');
+  document.getElementById('success-summary').innerHTML = summaryLines;
+
+  // Show success message IMMEDIATELY — don't wait for backend
+  document.getElementById('booking-form').style.display  = 'none';
+  document.getElementById('success-state').style.display = '';
+  // Scroll to top of booking card
+  const card = document.getElementById('booking-card');
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  else window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Send to backend in background
+  try {
+    fetch(`${BACKEND}/bookings/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_name:  name,
+        email:        email,
+        phone:        phone,
+        reading_type: readingType,
+        booking_date: date,
+        booking_time: time,
+        notes:        notes,
+        status:       'pending',
+        amount:       0,
+      }),
+    }).catch(()=>{});
+  } catch(e) {}
+}
+
+/* ── Year in footer ── */
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* ── Boot ── */
+loadSlots();
+</script>
+</body>
+</html>

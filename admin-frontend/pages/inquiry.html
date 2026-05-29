@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+(function(){ if(!sessionStorage.getItem('admin_token')) window.location.href='../login.html'; })();
+</script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Inquiries — Astro Annie Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;1,400&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../_shared.css"/>
+<style>
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.sm-stat{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh-sm);display:flex;align-items:center;gap:12px}
+.sm-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ic-p{background:rgba(107,79,160,.1)}.ic-g{background:rgba(201,168,76,.12)}.ic-t{background:rgba(74,186,171,.1)}.ic-r{background:rgba(196,94,126,.1)}
+.sm-val{font-family:'Cinzel',serif;font-size:22px;font-weight:600;line-height:1}
+.sm-lbl{font-size:10px;color:var(--text-3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+.msg-preview{color:var(--text-3);font-size:12px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.client-cell{display:flex;align-items:center;gap:10px}
+.c-name{font-weight:600;font-size:13px}
+.c-email{font-size:11px;color:var(--text-3);margin-top:1px}
+.detail-block{margin-bottom:16px}
+.detail-label{font-size:10px;font-weight:700;letter-spacing:.09em;color:var(--text-3);text-transform:uppercase;margin-bottom:5px}
+.detail-val{font-size:14px;color:var(--text);line-height:1.7}
+.msg-box{background:var(--bg);border:.5px solid var(--border-md);border-radius:var(--r-sm);padding:14px;line-height:1.75;font-size:13px;color:var(--text);white-space:pre-wrap}
+.sa-btn{border:none;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:.05em;cursor:pointer;transition:opacity .15s;white-space:nowrap;margin:2px 2px 0 0}
+.sa-reply{background:#1a4a6b;color:#fff}
+.sa-archive{background:#5a3e00;color:#ffe09a}
+.sa-btn:hover{opacity:.8}
+.role-super{color:#C9A84C!important;font-weight:700}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon" style="background:linear-gradient(135deg,#C9A84C,#E8CC85);font-family:'Cinzel',serif;font-size:16px;color:#3D2800;font-weight:700;letter-spacing:0">A</div>
+    <div>
+      <div class="sb-brand">Astro Annie</div>
+      <div class="sb-sub">Admin Portal</div>
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Main</div>
+    <a class="nav-a" href="../dashboard.html"><span class="nav-ic">✦</span>Dashboard</a>
+    <a class="nav-a" href="bookings.html"><span class="nav-ic">📅</span>Bookings<span class="nav-badge" id="sbBk">—</span></a>
+    <a class="nav-a active" href="inquiry.html"><span class="nav-ic">💌</span>Inquiries<span class="nav-badge" id="sbInq">—</span></a>
+    <a class="nav-a" href="slots.html"><span class="nav-ic">🗓</span>Manage Slots</a>
+    <div class="sb-label" id="superMenu" style="display:none">Superuser</div>
+    <a class="nav-a" href="AdminUsers.html" id="adminUsersLink" style="display:none"><span class="nav-ic">👥</span>Manage Admins</a>
+  </div>
+  <div class="sb-bottom">
+    <a class="nav-a" onclick="doLogout()" style="cursor:pointer"><span class="nav-ic">⬡</span>Logout</a>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="search">
+      <span style="color:var(--text-3)">🔍</span>
+      <input type="text" id="qInput" placeholder="Search name, email, message…"/>
+    </div>
+    <div class="tb-right">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div class="tb-avatar" id="tbAvatar">?</div>
+        <div class="tb-info">
+          <div class="name" id="tbName">—</div>
+          <div class="role" id="tbRole">Admin</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="ph">
+      <div class="ph-left">
+        <div class="eyebrow">✦ ✧ ✦</div>
+        <h1>Inquiries</h1>
+        <div class="sub">Client messages & spiritual guidance requests</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="sm-stat"><div class="sm-ico ic-p">💌</div><div><div class="sm-val" id="stTotal">—</div><div class="sm-lbl">Total</div></div></div>
+      <div class="sm-stat"><div class="sm-ico ic-g">🆕</div><div><div class="sm-val" id="stNew">—</div><div class="sm-lbl">New</div></div></div>
+      <div class="sm-stat"><div class="sm-ico ic-t">✅</div><div><div class="sm-val" id="stReplied">—</div><div class="sm-lbl">Replied</div></div></div>
+      <div class="sm-stat"><div class="sm-ico ic-r">📦</div><div><div class="sm-val" id="stArchived">—</div><div class="sm-lbl">Archived</div></div></div>
+    </div>
+
+    <div class="tbl-card">
+      <div class="tbl-toolbar">
+        <div class="ftabs" id="statusTabs">
+          <button class="ftab active" data-v="all">All</button>
+          <button class="ftab" data-v="new">New</button>
+          <button class="ftab" data-v="replied">Replied</button>
+          <button class="ftab" data-v="archived">Archived</button>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+          <select class="sel" id="sortSel">
+            <option value="desc">Newest First</option>
+            <option value="asc">Oldest First</option>
+          </select>
+          <button class="btn-ghost" onclick="clearFilters()">✕ Clear</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Client</th><th>Message Preview</th><th>Received</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="tbody">
+            <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-3)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <span class="pager-info" id="pagerInfo">Loading…</span>
+        <div class="pager-btns" id="pagerBtns"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal-bg" id="viewBg" onclick="if(event.target===this)closeView()">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-head">
+      <div class="modal-title">💌 Inquiry Detail</div>
+      <button class="modal-close" onclick="closeView()">✕</button>
+    </div>
+    <div class="modal-body" id="viewBody"></div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeView()">Close</button>
+      <button class="btn-primary" id="replyBtn">✉ Reply via Email</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API='http://127.0.0.1:8000/api';
+let ALL=[],statusFilter='all',page=1;
+const PER=12;
+
+// User info from session
+const adminUser = sessionStorage.getItem('admin_user') || 'Admin';
+const adminRole = sessionStorage.getItem('admin_role') || 'admin';
+const isSuperuser = adminRole === 'superuser';
+document.getElementById('tbName').textContent = adminUser;
+document.getElementById('tbRole').textContent = isSuperuser ? '⭐ Superuser' : 'Admin';
+if(isSuperuser) document.getElementById('tbRole').className = 'role role-super';
+document.getElementById('tbAvatar').textContent = adminUser.slice(0,2).toUpperCase();
+if(isSuperuser){
+  document.getElementById('superMenu').style.display='';
+  document.getElementById('adminUsersLink').style.display='';
+}
+
+function doLogout(){ sessionStorage.clear(); window.location.href='../login.html'; }
+
+function toast(msg,ok=true){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.style.borderLeftColor=ok?'var(--gold)':'#C45E7E';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);
+}
+function initials(n){return(n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+function fmtDT(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+
+async function load(){
+  try{
+    const r=await fetch(`${API}/inquiries/`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    ALL=await r.json();
+    updateStats();render();
+    document.getElementById('sbInq').textContent=ALL.filter(i=>i.status==='new').length;
+    const br=await fetch(`${API}/bookings/`);
+    if(br.ok){const bks=await br.json();document.getElementById('sbBk').textContent=bks.filter(b=>b.status==='pending').length;}
+  }catch(e){
+    toast('⚠ Backend offline',false);
+    document.getElementById('tbody').innerHTML='<tr><td colspan="5" style="text-align:center;padding:40px;color:#C45E7E">Backend offline — run: python manage.py runserver</td></tr>';
+  }
+}
+
+function updateStats(){
+  document.getElementById('stTotal').textContent=ALL.length;
+  document.getElementById('stNew').textContent=ALL.filter(i=>i.status==='new').length;
+  document.getElementById('stReplied').textContent=ALL.filter(i=>i.status==='replied').length;
+  document.getElementById('stArchived').textContent=ALL.filter(i=>i.status==='archived').length;
+}
+
+function filtered(){
+  const q=(document.getElementById('qInput').value||'').toLowerCase();
+  const sort=document.getElementById('sortSel').value;
+  let d=ALL.filter(i=>{
+    if(statusFilter!=='all'&&i.status!==statusFilter)return false;
+    if(q&&!((i.name||'').toLowerCase().includes(q)||(i.email||'').toLowerCase().includes(q)||(i.message||'').toLowerCase().includes(q)))return false;
+    return true;
+  });
+  d.sort((a,b)=>sort==='asc'
+    ?(new Date(a.created_at)-new Date(b.created_at))
+    :(new Date(b.created_at)-new Date(a.created_at)));
+  return d;
+}
+
+function render(){
+  const data=filtered();
+  const total=data.length;
+  const pages=Math.max(1,Math.ceil(total/PER));
+  if(page>pages)page=1;
+  const start=(page-1)*PER;
+  const slice=data.slice(start,start+PER);
+  const avBgs=['linear-gradient(135deg,#6B4FA0,#9B7FCA)','linear-gradient(135deg,#C9A84C,#E8CC85)','linear-gradient(135deg,#4ABAAB,#3AA89A)','linear-gradient(135deg,#C45E7E,#E08AAA)','linear-gradient(135deg,#5A7ECA,#8AAAE0)'];
+  const avTxt=['#fff','#3D2800','#fff','#fff','#fff'];
+
+  document.getElementById('tbody').innerHTML=!slice.length
+    ?'<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-3)">No inquiries match filters</td></tr>'
+    :slice.map((i,idx)=>{
+      const ai=(start+idx)%5;
+      const preview=(i.message||'').slice(0,70)+(i.message&&i.message.length>70?'…':'');
+      return`<tr>
+        <td><div class="client-cell">
+          <div class="av" style="background:${avBgs[ai]};color:${avTxt[ai]}">${initials(i.name)}</div>
+          <div><div class="c-name">${i.name||''}</div><div class="c-email">${i.email||''}</div></div>
+        </div></td>
+        <td><div class="msg-preview">${preview}</div></td>
+        <td style="font-size:12px;color:var(--text-3)">${fmtDT(i.created_at)}</td>
+        <td><span class="badge badge-${i.status}"><span class="dot"></span>${i.status.charAt(0).toUpperCase()+i.status.slice(1)}</span></td>
+        <td><div class="act">
+          <button class="act-btn" onclick="viewInq(${i.id})" title="View">👁</button>
+          <button class="act-btn" onclick="markReplied(${i.id})" title="Mark Replied">✅</button>
+          <button class="act-btn" onclick="markArchived(${i.id})" title="Archive">📦</button>
+          <button class="act-btn danger" onclick="delInq(${i.id},'${(i.name||'').replace(/'/g,"\\'")}')">✕</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+
+  const s=total>0?start+1:0,e=Math.min(start+PER,total);
+  document.getElementById('pagerInfo').textContent=total>0?`Showing ${s}–${e} of ${total}`:'No results';
+  const pb=document.getElementById('pagerBtns');pb.innerHTML='';
+  for(let i=1;i<=pages;i++){
+    const btn=document.createElement('button');
+    btn.className='pager-btn'+(i===page?' active':'');
+    btn.textContent=i;btn.onclick=()=>{page=i;render();};pb.appendChild(btn);
+  }
+}
+
+function clearFilters(){
+  document.getElementById('qInput').value='';
+  document.getElementById('sortSel').value='desc';
+  statusFilter='all';document.querySelectorAll('.ftab').forEach(t=>t.classList.toggle('active',t.dataset.v==='all'));
+  page=1;render();
+}
+
+document.getElementById('statusTabs').addEventListener('click',e=>{
+  if(!e.target.classList.contains('ftab'))return;
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
+  e.target.classList.add('active');statusFilter=e.target.dataset.v;page=1;render();
+});
+['qInput','sortSel'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{page=1;render();});
+  el.addEventListener('change',()=>{page=1;render();});
+});
+
+function viewInq(id){
+  const i=ALL.find(x=>x.id===id);if(!i)return;
+  document.getElementById('viewBody').innerHTML=`
+    <div class="detail-block"><div class="detail-label">From</div><div class="detail-val">${i.name||''}</div></div>
+    <div class="detail-block"><div class="detail-label">Email</div><div class="detail-val"><a href="mailto:${i.email}" style="color:var(--purple)">${i.email||''}</a></div></div>
+    <div class="detail-block"><div class="detail-label">Received</div><div class="detail-val">${fmtDT(i.created_at)}</div></div>
+    <div class="detail-block"><div class="detail-label">Status</div><div class="detail-val"><span class="badge badge-${i.status}"><span class="dot"></span>${i.status}</span></div></div>
+    <div class="detail-block"><div class="detail-label">Message</div><div class="msg-box">${(i.message||'').replace(/</g,'&lt;')}</div></div>`;
+  document.getElementById('replyBtn').onclick=()=>{
+    window.open(`mailto:${i.email}?subject=Re: Your Inquiry — Astro Annie`);
+    patchStatus(i.id,'replied');
+  };
+  document.getElementById('viewBg').classList.add('open');
+}
+function closeView(){document.getElementById('viewBg').classList.remove('open');}
+
+async function patchStatus(id,status){
+  try{
+    await fetch(`${API}/inquiries/${id}/`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+    await load();toast(`✓ Marked ${status}`);
+  }catch{toast('Update failed',false);}
+}
+function markReplied(id){ patchStatus(id,'replied'); }
+function markArchived(id){ patchStatus(id,'archived'); }
+
+async function delInq(id,name){
+  if(!confirm(`Delete inquiry from ${name}?`))return;
+  try{await fetch(`${API}/inquiries/${id}/`,{method:'DELETE'});await load();toast('✓ Deleted');}
+  catch{toast('Delete failed',false);}
+}
+
+load();
+</script>
+</body>
+</html>

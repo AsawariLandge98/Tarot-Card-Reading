@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dashboard — Astro Annie Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="_shared.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>(function(){ if(!sessionStorage.getItem('admin_token')) window.location.replace('login.html'); })();</script>
+<style>
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat-card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh-sm);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--sh-md)}
+.stat-card::after{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.07}
+.sc-purple::after{background:var(--purple)}.sc-gold::after{background:var(--gold)}.sc-teal::after{background:#4ABAAB}.sc-rose::after{background:#C45E7E}
+.stat-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px}
+.sc-purple .stat-ico{background:rgba(107,79,160,.1)}.sc-gold .stat-ico{background:rgba(201,168,76,.12)}.sc-teal .stat-ico{background:rgba(74,186,171,.1)}.sc-rose .stat-ico{background:rgba(196,94,126,.1)}
+.stat-label{font-size:10px;letter-spacing:.1em;color:var(--text-3);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.stat-val{font-family:'Cinzel',serif;font-size:30px;font-weight:600;color:var(--text);line-height:1}
+.stat-sub{font-size:11px;color:var(--text-3);margin-top:6px}
+.charts-row{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:22px}
+.chart-card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:var(--sh-sm)}
+.chart-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.chart-title{font-family:'Cinzel',serif;font-size:13px;font-weight:600;letter-spacing:.04em}
+.chart-sub{font-size:11px;color:var(--text-3);margin-top:2px}
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.panel{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:var(--sh-sm)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.panel-title{font-family:'Cinzel',serif;font-size:13px;font-weight:600;letter-spacing:.04em}
+.panel-link{font-size:11px;color:var(--purple);font-weight:600;text-decoration:none;cursor:pointer}
+.panel-link:hover{text-decoration:underline}
+.recent-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:.5px solid var(--border)}
+.recent-row:last-child{border-bottom:none}
+.recent-info{flex:1;min-width:0}
+.recent-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent-meta{font-size:11px;color:var(--text-3);margin-top:2px}
+.recent-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.recent-time{font-size:10px;color:var(--text-3)}
+.empty-state{padding:32px;text-align:center;color:var(--text-3);font-size:13px}
+.search-wrap{position:relative}
+.search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:.5px solid var(--border-md);border-radius:12px;box-shadow:var(--sh-md);z-index:200;max-height:320px;overflow-y:auto;display:none}
+.search-results.show{display:block}
+.sr-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .13s;border-bottom:.5px solid var(--border)}
+.sr-item:last-child{border-bottom:none}
+.sr-item:hover{background:var(--purple-pale)}
+.sr-type{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);font-weight:700;margin-bottom:2px}
+.sr-name{font-size:13px;font-weight:600;color:var(--text)}
+.sr-meta{font-size:11px;color:var(--text-3)}
+.sr-empty{padding:20px;text-align:center;color:var(--text-3);font-size:13px}
+.role-super{color:#C9A84C!important;font-weight:700}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon" style="background:linear-gradient(135deg,#C9A84C,#E8CC85);font-family:'Cinzel',serif;font-size:16px;color:#3D2800;font-weight:700;letter-spacing:0">A</div>
+    <div>
+      <div class="sb-brand">Astro Annie</div>
+      <div class="sb-sub">Admin Portal</div>
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Main</div>
+    <a class="nav-a active" href="dashboard.html"><span class="nav-ic">✦</span>Dashboard</a>
+    <a class="nav-a" href="pages/bookings.html"><span class="nav-ic">📅</span>Bookings<span class="nav-badge" id="sbBk">—</span></a>
+    <a class="nav-a" href="pages/inquiry.html"><span class="nav-ic">💌</span>Inquiries<span class="nav-badge" id="sbInq">—</span></a>
+    <a class="nav-a" href="pages/slots.html"><span class="nav-ic">🗓</span>Manage Slots</a>
+    <div class="sb-label" id="superMenu" style="display:none">Superuser</div>
+    <a class="nav-a" href="pages/AdminUsers.html" id="adminUsersLink" style="display:none"><span class="nav-ic">👥</span>Manage Admins</a>
+
+  </div>
+  <div class="sb-bottom">
+    <a class="nav-a" onclick="doLogout()" style="cursor:pointer"><span class="nav-ic">⬡</span>Logout</a>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="search-wrap">
+      <div class="search">
+        <span style="color:var(--text-3)">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search bookings, inquiries…" oninput="onSearch(this.value)" autocomplete="off"/>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    <div class="tb-right">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div class="tb-avatar" id="tbAvatar">?</div>
+        <div class="tb-info">
+          <div class="name" id="tbName">—</div>
+          <div class="role" id="tbRole">Admin</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="ph">
+      <div class="ph-left">
+        <div class="eyebrow">✦ ✧ ✦</div>
+        <h1>Dashboard</h1>
+        <div class="sub">The stars align — your realm at a glance</div>
+      </div>
+      <a class="btn-primary" href="pages/slots.html">+ Add Slots</a>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card sc-purple"><div class="stat-ico">📅</div><div class="stat-label">Total Bookings</div><div class="stat-val" id="stTotalBk">—</div><div class="stat-sub" id="stPendingBk">— pending</div></div>
+      <div class="stat-card sc-gold"><div class="stat-ico">✅</div><div class="stat-label">Confirmed</div><div class="stat-val" id="stConfirmed">—</div><div class="stat-sub" id="stCompleted">— completed</div></div>
+      <div class="stat-card sc-teal"><div class="stat-ico">💌</div><div class="stat-label">Inquiries</div><div class="stat-val" id="stInq">—</div><div class="stat-sub" id="stNewInq">— new</div></div>
+      <div class="stat-card sc-rose"><div class="stat-ico">🗓</div><div class="stat-label">Open Slots</div><div class="stat-val" id="stSlots">—</div><div class="stat-sub">available for booking</div></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card"><div class="chart-head"><div><div class="chart-title">Booking Types</div><div class="chart-sub">Distribution of reading types</div></div></div><canvas id="barChart" height="170"></canvas></div>
+      <div class="chart-card"><div class="chart-head"><div><div class="chart-title">Status Mix</div><div class="chart-sub">Current booking statuses</div></div></div><div style="display:flex;justify-content:center"><canvas id="donut" width="160" height="160"></canvas></div><div id="donutLegend" style="margin-top:12px;display:flex;flex-direction:column;gap:7px"></div></div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="panel"><div class="panel-head"><div class="panel-title">Recent Bookings</div><a class="panel-link" href="pages/bookings.html">View all →</a></div><div id="recentBookings"><div class="empty-state">Loading…</div></div></div>
+      <div class="panel"><div class="panel-head"><div class="panel-title">Recent Inquiries</div><a class="panel-link" href="pages/inquiry.html">View all →</a></div><div id="recentInquiries"><div class="empty-state">Loading…</div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API='http://127.0.0.1:8000/api';
+const SC={pending:'badge-pending',confirmed:'badge-confirmed',completed:'badge-completed',cancelled:'badge-cancelled'};
+const SL={pending:'Pending',confirmed:'Confirmed',completed:'Completed',cancelled:'Cancelled'};
+
+// User info
+const adminUser = sessionStorage.getItem('admin_user') || 'Admin';
+const adminRole = sessionStorage.getItem('admin_role') || 'admin';
+const isSuperuser = adminRole === 'superuser';
+
+document.getElementById('tbName').textContent = adminUser;
+document.getElementById('tbRole').textContent = isSuperuser ? '⭐ Superuser' : 'Admin';
+if(isSuperuser) document.getElementById('tbRole').className = 'role role-super';
+document.getElementById('tbAvatar').textContent = adminUser.slice(0,2).toUpperCase();
+if(isSuperuser){
+  document.getElementById('superMenu').style.display='';
+  document.getElementById('adminUsersLink').style.display='';
+}
+
+function doLogout(){
+  sessionStorage.clear();
+  window.location.replace('login.html');
+}
+
+function toast(msg,ok=true){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.borderLeftColor=ok?'var(--gold)':'#C45E7E';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);
+}
+function fmtDate(d){ if(!d)return'—'; return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
+function fmtDateTime(d){ if(!d)return'—'; return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }
+function initials(n){ return(n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+
+let ALL_BOOKINGS=[],ALL_INQUIRIES=[];
+let barChart=null,donutChart=null;
+
+function onSearch(q){
+  const box=document.getElementById('searchResults');
+  q=q.trim().toLowerCase();
+  if(q.length<2){box.classList.remove('show');return;}
+  const bRes=ALL_BOOKINGS.filter(b=>(b.client_name||'').toLowerCase().includes(q)||(b.email||'').toLowerCase().includes(q)||(b.reading_type||'').toLowerCase().includes(q)).slice(0,5);
+  const iRes=ALL_INQUIRIES.filter(i=>(i.name||'').toLowerCase().includes(q)||(i.email||'').toLowerCase().includes(q)||(i.message||'').toLowerCase().includes(q)).slice(0,3);
+  if(!bRes.length&&!iRes.length){box.innerHTML='<div class="sr-empty">No results found</div>';box.classList.add('show');return;}
+  let html='';
+  bRes.forEach(b=>{html+=`<div class="sr-item" onclick="window.location.href='pages/bookings.html'"><div class="av" style="background:linear-gradient(135deg,#6B4FA0,#9B7FCA);width:32px;height:32px;font-size:11px">${initials(b.client_name)}</div><div><div class="sr-type">Booking</div><div class="sr-name">${b.client_name}</div><div class="sr-meta">${b.reading_type||'—'} · ${fmtDate(b.booking_date)}</div></div></div>`;});
+  iRes.forEach(i=>{html+=`<div class="sr-item" onclick="window.location.href='pages/inquiry.html'"><div class="av" style="background:linear-gradient(135deg,#C9A84C,#E8CC85);color:#3D2800;width:32px;height:32px;font-size:11px">${initials(i.name)}</div><div><div class="sr-type">Inquiry</div><div class="sr-name">${i.name}</div><div class="sr-meta">${(i.message||'').slice(0,50)}…</div></div></div>`;});
+  box.innerHTML=html;box.classList.add('show');
+}
+document.addEventListener('click',e=>{ if(!e.target.closest('.search-wrap')) document.getElementById('searchResults').classList.remove('show'); });
+
+async function loadDashboard(){
+  try{
+    const [bkRes,inqRes,slRes]=await Promise.all([fetch(`${API}/bookings/`),fetch(`${API}/inquiries/`),fetch(`${API}/slots/?open=1`)]);
+    ALL_BOOKINGS=await bkRes.json();
+    ALL_INQUIRIES=await inqRes.json();
+    const slots=await slRes.json();
+
+    document.getElementById('stTotalBk').textContent=ALL_BOOKINGS.length;
+    document.getElementById('stPendingBk').textContent=ALL_BOOKINGS.filter(b=>b.status==='pending').length+' pending';
+    document.getElementById('stConfirmed').textContent=ALL_BOOKINGS.filter(b=>b.status==='confirmed').length;
+    document.getElementById('stCompleted').textContent=ALL_BOOKINGS.filter(b=>b.status==='completed').length+' completed';
+    document.getElementById('stInq').textContent=ALL_INQUIRIES.length;
+    document.getElementById('stNewInq').textContent=ALL_INQUIRIES.filter(i=>i.status==='new').length+' new';
+    document.getElementById('stSlots').textContent=slots.length;
+    document.getElementById('sbBk').textContent=ALL_BOOKINGS.filter(b=>b.status==='pending').length;
+    document.getElementById('sbInq').textContent=ALL_INQUIRIES.filter(i=>i.status==='new').length;
+
+    const typeMap={};ALL_BOOKINGS.forEach(b=>{typeMap[b.reading_type]=(typeMap[b.reading_type]||0)+1;});
+    if(barChart)barChart.destroy();
+    barChart=new Chart(document.getElementById('barChart').getContext('2d'),{type:'bar',data:{labels:Object.keys(typeMap),datasets:[{label:'Bookings',data:Object.values(typeMap),backgroundColor:'rgba(107,79,160,.7)',borderColor:'#6B4FA0',borderRadius:6,borderWidth:1}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{family:'Raleway',size:11},color:'#A89CC0'}},y:{grid:{color:'rgba(107,79,160,.06)'},ticks:{font:{family:'Raleway',size:11},color:'#A89CC0'},beginAtZero:true}}}});
+
+    const statusMap={pending:0,confirmed:0,completed:0,cancelled:0};
+    ALL_BOOKINGS.forEach(b=>{if(statusMap[b.status]!==undefined)statusMap[b.status]++;});
+    const dColors=['#C9A84C','#1D9E75','#6B4FA0','#C45E7E'],dLabels=['Pending','Confirmed','Completed','Cancelled'];
+    if(donutChart)donutChart.destroy();
+    donutChart=new Chart(document.getElementById('donut').getContext('2d'),{type:'doughnut',data:{labels:dLabels,datasets:[{data:Object.values(statusMap),backgroundColor:dColors,borderColor:'#fff',borderWidth:3,hoverOffset:5}]},options:{cutout:'68%',responsive:false,plugins:{legend:{display:false}}}});
+    document.getElementById('donutLegend').innerHTML=dLabels.map((l,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-2)"><div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:50%;background:${dColors[i]};display:inline-block"></span>${l}</div><span style="font-weight:600;color:var(--text)">${Object.values(statusMap)[i]}</span></div>`).join('');
+
+    const bEl=document.getElementById('recentBookings');
+    bEl.innerHTML=ALL_BOOKINGS.length?ALL_BOOKINGS.slice(0,6).map(b=>`<div class="recent-row"><div class="av" style="background:linear-gradient(135deg,#6B4FA0,#9B7FCA)">${initials(b.client_name)}</div><div class="recent-info"><div class="recent-name">${b.client_name}</div><div class="recent-meta">${b.reading_type||'—'} · ${fmtDate(b.booking_date)}</div></div><div class="recent-right"><span class="badge ${SC[b.status]||'badge-pending'}"><span class="dot"></span>${SL[b.status]||b.status}</span></div></div>`).join(''):'<div class="empty-state">No bookings yet</div>';
+
+    const iEl=document.getElementById('recentInquiries');
+    iEl.innerHTML=ALL_INQUIRIES.length?ALL_INQUIRIES.slice(0,6).map(i=>`<div class="recent-row"><div class="av" style="background:linear-gradient(135deg,#C9A84C,#E8CC85);color:#3D2800">${initials(i.name)}</div><div class="recent-info"><div class="recent-name">${i.name}</div><div class="recent-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">${(i.message||'').slice(0,60)}…</div></div><div class="recent-right"><span class="badge badge-${i.status}"><span class="dot"></span>${i.status.charAt(0).toUpperCase()+i.status.slice(1)}</span></div></div>`).join(''):'<div class="empty-state">No inquiries yet</div>';
+
+  }catch(e){
+    toast('⚠ Backend offline',false);
+    ['stTotalBk','stConfirmed','stInq','stSlots'].forEach(id=>document.getElementById(id).textContent='—');
+  }
+}
+loadDashboard();
+</script>
+</body>
+</html>

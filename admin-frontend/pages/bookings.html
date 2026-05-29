@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+(function(){ if(!sessionStorage.getItem('admin_token')) window.location.replace('../login.html'); })();
+</script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Bookings — Astro Annie Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;1,400&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../_shared.css"/>
+<style>
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.sm-stat{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh-sm);display:flex;align-items:center;gap:12px}
+.sm-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ic-p{background:rgba(107,79,160,.1)}.ic-g{background:rgba(201,168,76,.12)}.ic-t{background:rgba(74,186,171,.1)}.ic-r{background:rgba(196,94,126,.1)}
+.sm-val{font-family:'Cinzel',serif;font-size:22px;font-weight:600;line-height:1}
+.sm-lbl{font-size:10px;color:var(--text-3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+.filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.client-cell{display:flex;align-items:center;gap:10px}
+.c-name{font-weight:600;font-size:13px}
+.c-email{font-size:11px;color:var(--text-3);margin-top:1px}
+.amount{font-family:'Cinzel',serif;font-weight:600;font-size:13px}
+.iab{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1px solid var(--border-md);background:var(--surface);cursor:pointer;transition:all .15s;font-size:13px;flex-shrink:0;padding:0}
+.iab:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.iab-green{border-color:#1D9E75;color:#1D9E75}.iab-green:hover{background:#1D9E75;color:#fff}
+.iab-blue{border-color:#3A6EBD;color:#3A6EBD}.iab-blue:hover{background:#3A6EBD;color:#fff}
+.iab-orange{border-color:#C9A84C;color:#C9A84C}.iab-orange:hover{background:#C9A84C;color:#fff}
+.iab-red{border-color:#C45E7E;color:#C45E7E}.iab-red:hover{background:#C45E7E;color:#fff}
+.iab-gray{border-color:#aaa;color:#888}.iab-gray:hover{background:#888;color:#fff}
+.iab-purple{border-color:#6B4FA0;color:#6B4FA0}.iab-purple:hover{background:#6B4FA0;color:#fff}
+.act-grp{display:flex;align-items:center;gap:5px}
+.role-super{color:#C9A84C!important;font-weight:700}
+
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon" style="background:linear-gradient(135deg,#C9A84C,#E8CC85);font-family:'Cinzel',serif;font-size:16px;color:#3D2800;font-weight:700;letter-spacing:0">A</div>
+    <div>
+      <div class="sb-brand">Astro Annie</div>
+      <div class="sb-sub">Admin Portal</div>
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Main</div>
+    <a class="nav-a" href="../dashboard.html"><span class="nav-ic">✦</span>Dashboard</a>
+    <a class="nav-a active" href="bookings.html"><span class="nav-ic">📅</span>Bookings<span class="nav-badge" id="sbBk">—</span></a>
+    <a class="nav-a" href="inquiry.html"><span class="nav-ic">💌</span>Inquiries<span class="nav-badge" id="sbInq">—</span></a>
+    <a class="nav-a" href="slots.html"><span class="nav-ic">🗓</span>Manage Slots</a>
+    <div class="sb-label" id="superMenu" style="display:none">Superuser</div>
+    <a class="nav-a" href="AdminUsers.html" id="adminUsersLink" style="display:none"><span class="nav-ic">👥</span>Manage Admins</a>
+  </div>
+  <div class="sb-bottom">
+    <a class="nav-a" onclick="doLogout()" style="cursor:pointer"><span class="nav-ic">⬡</span>Logout</a>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="search">
+      <span style="color:var(--text-3)">🔍</span>
+      <input type="text" id="qInput" placeholder="Search client, email, phone…"/>
+    </div>
+    <div class="tb-right">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div class="tb-avatar" id="tbAvatar">?</div>
+        <div class="tb-info">
+          <div class="name" id="tbName">—</div>
+          <div class="role" id="tbRole">Admin</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="ph">
+      <div class="ph-left">
+        <div class="eyebrow">✦ ✧ ✦</div>
+        <h1>Bookings</h1>
+        <div class="sub">All reading sessions & appointments</div>
+      </div>
+      <button class="btn-primary" onclick="openModal()">＋ New Booking</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="sm-stat"><div class="sm-ico ic-p">📅</div><div><div class="sm-val" id="stTotal">—</div><div class="sm-lbl">Total</div></div></div>
+      <div class="sm-stat"><div class="sm-ico ic-g">✅</div><div><div class="sm-val" id="stConf">—</div><div class="sm-lbl">Confirmed</div></div></div>
+      <div class="sm-stat"><div class="sm-ico ic-t">⏳</div><div><div class="sm-val" id="stPend">—</div><div class="sm-lbl">Pending</div></div></div>
+      <div class="sm-stat"><div class="sm-ico ic-r">✗</div><div><div class="sm-val" id="stCanc">—</div><div class="sm-lbl">Cancelled</div></div></div>
+    </div>
+
+    <div class="tbl-card">
+      <div class="tbl-toolbar">
+        <div class="ftabs" id="statusTabs">
+          <button class="ftab active" data-v="all">All</button>
+          <button class="ftab" data-v="pending">Pending</button>
+          <button class="ftab" data-v="confirmed">Confirmed</button>
+          <button class="ftab" data-v="completed">Completed</button>
+          <button class="ftab" data-v="cancelled">Cancelled</button>
+        </div>
+        <div class="filters" style="margin-left:auto">
+          <input class="form-input" type="date" id="dateFilter" style="width:148px;font-size:12px;padding:6px 10px" title="Filter by date"/>
+          <select class="sel" id="typeFilter">
+            <option value="">All Types</option>
+            <option>Three Card</option><option>Celtic Cross</option><option>Love Reading</option>
+            <option>Career Path</option><option>Year Ahead</option><option>Full Spread</option>
+            <option>Numerology</option><option>Lal Kitab</option><option>Vastu</option>
+          </select>
+          <select class="sel" id="sortSel">
+            <option value="date-desc">Newest First</option>
+            <option value="date-asc">Oldest First</option>
+            <option value="name">Client Name</option>
+            <option value="amount">Amount ↓</option>
+          </select>
+          <button class="btn-ghost" onclick="clearFilters()">✕ Clear</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Client</th><th>Reading</th><th>Date & Time</th>
+              <th>Status</th><th>Amount</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-3)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <span class="pager-info" id="pagerInfo">Loading…</span>
+        <div class="pager-btns" id="pagerBtns"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" onclick="bgClick(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">✦ New Booking</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-g"><label class="form-label">Client Name *</label><input class="form-input" id="fName" placeholder="Full name"/></div>
+        <div class="form-g"><label class="form-label">Email *</label><input class="form-input" id="fEmail" type="email" placeholder="email@example.com"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-g"><label class="form-label">Phone</label><input class="form-input" id="fPhone" placeholder="+91 …"/></div>
+        <div class="form-g"><label class="form-label">Amount (₹)</label><input class="form-input" id="fAmount" type="number" placeholder="0"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-g">
+          <label class="form-label">Reading Type *</label>
+          <select class="form-input" id="fType">
+            <option>Three Card</option><option>Celtic Cross</option><option>Love Reading</option>
+            <option>Career Path</option><option>Year Ahead</option><option>Full Spread</option>
+            <option>Numerology</option><option>Lal Kitab</option><option>Vastu</option>
+          </select>
+        </div>
+        <div class="form-g">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="fStatus">
+            <option value="pending">Pending</option><option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-g"><label class="form-label">Date *</label><input class="form-input" id="fDate" type="date"/></div>
+        <div class="form-g"><label class="form-label">Time *</label><input class="form-input" id="fTime" type="time"/></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-g"><label class="form-label">Notes</label><textarea class="form-input" id="fNotes" rows="3" style="resize:vertical" placeholder="Special notes…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="saveBtn" onclick="saveBooking()">Save Booking</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API='http://127.0.0.1:8000/api';
+let ALL=[],editId=null,statusFilter='all',page=1;
+const PER=10;
+const SC={pending:'badge-pending',confirmed:'badge-confirmed',completed:'badge-completed',cancelled:'badge-cancelled'};
+const SL={pending:'Pending',confirmed:'Confirmed',completed:'Completed',cancelled:'Cancelled'};
+
+// User info from session
+const adminUser = sessionStorage.getItem('admin_user') || 'Admin';
+const adminRole = sessionStorage.getItem('admin_role') || 'admin';
+const isSuperuser = adminRole === 'superuser';
+document.getElementById('tbName').textContent = adminUser;
+document.getElementById('tbRole').textContent = isSuperuser ? '⭐ Superuser' : 'Admin';
+if(isSuperuser) document.getElementById('tbRole').className = 'role role-super';
+document.getElementById('tbAvatar').textContent = adminUser.slice(0,2).toUpperCase();
+if(isSuperuser){
+  document.getElementById('superMenu').style.display='';
+  document.getElementById('adminUsersLink').style.display='';
+}
+
+function doLogout(){ sessionStorage.clear(); window.location.replace('../login.html'); }
+
+function toast(msg,ok=true){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.style.borderLeftColor=ok?'var(--gold)':'#C45E7E';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);
+}
+function initials(n){return(n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+function fmtDate(d){if(!d)return'—';return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
+
+async function load(){
+  try{
+    const r=await fetch(`${API}/bookings/`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    ALL=await r.json();
+    updateStats();render();
+    document.getElementById('sbBk').textContent=ALL.filter(b=>b.status==='pending').length;
+    const ir=await fetch(`${API}/inquiries/`);
+    if(ir.ok){
+      const inqs=await ir.json();
+      document.getElementById('sbInq').textContent=inqs.filter(i=>i.status==='new').length;
+    }
+  }catch(e){
+    console.error('Load error:',e);
+    toast('⚠ Backend offline — run: python manage.py runserver',false);
+    document.getElementById('tbody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:#C45E7E">Backend offline — run: python manage.py runserver</td></tr>';
+    ['stTotal','stConf','stPend','stCanc'].forEach(id=>document.getElementById(id).textContent='—');
+  }
+}
+
+function updateStats(){
+  document.getElementById('stTotal').textContent=ALL.length;
+  document.getElementById('stConf').textContent=ALL.filter(b=>b.status==='confirmed').length;
+  document.getElementById('stPend').textContent=ALL.filter(b=>b.status==='pending').length;
+  document.getElementById('stCanc').textContent=ALL.filter(b=>b.status==='cancelled').length;
+}
+
+function filtered(){
+  const q=(document.getElementById('qInput').value||'').toLowerCase();
+  const df=document.getElementById('dateFilter').value;
+  const tf=document.getElementById('typeFilter').value;
+  const sort=document.getElementById('sortSel').value;
+  let d=ALL.filter(b=>{
+    if(statusFilter!=='all'&&b.status!==statusFilter)return false;
+    if(df&&b.booking_date!==df)return false;
+    if(tf&&b.reading_type!==tf)return false;
+    if(q&&!((b.client_name||'').toLowerCase().includes(q)||(b.email||'').toLowerCase().includes(q)||(b.phone||'').toLowerCase().includes(q)))return false;
+    return true;
+  });
+  d.sort((a,b)=>{
+    if(sort==='date-asc')return(a.booking_date||'').localeCompare(b.booking_date||'');
+    if(sort==='date-desc')return(b.booking_date||'').localeCompare(a.booking_date||'');
+    if(sort==='name')return(a.client_name||'').localeCompare(b.client_name||'');
+    if(sort==='amount')return parseFloat(b.amount||0)-parseFloat(a.amount||0);
+    return 0;
+  });
+  return d;
+}
+
+function render(){
+  const data=filtered();
+  const total=data.length;
+  const pages=Math.max(1,Math.ceil(total/PER));
+  if(page>pages)page=1;
+  const start=(page-1)*PER;
+  const slice=data.slice(start,start+PER);
+  const avBgs=['linear-gradient(135deg,#6B4FA0,#9B7FCA)','linear-gradient(135deg,#C9A84C,#E8CC85)','linear-gradient(135deg,#4ABAAB,#3AA89A)','linear-gradient(135deg,#C45E7E,#E08AAA)','linear-gradient(135deg,#5A7ECA,#8AAAE0)'];
+  const avTxt=['#fff','#3D2800','#fff','#fff','#fff'];
+
+  document.getElementById('tbody').innerHTML=!slice.length
+    ?'<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-3)">No bookings match the filters</td></tr>'
+    :slice.map((b,i)=>{
+      const ai=(start+i)%5;
+      return`<tr>
+        <td><div class="client-cell">
+          <div class="av" style="background:${avBgs[ai]};color:${avTxt[ai]}">${initials(b.client_name)}</div>
+          <div><div class="c-name">${b.client_name||''}</div><div class="c-email">${b.email||''}${b.phone?` · ${b.phone}`:''}</div></div>
+        </div></td>
+        <td><span class="pill">${b.reading_type||'—'}</span></td>
+        <td><div style="line-height:1.5"><div style="font-weight:600">${fmtDate(b.booking_date)}</div><div style="font-size:11px;color:var(--text-3)">${b.booking_time||''}</div></div></td>
+        <td><span class="badge ${SC[b.status]||'badge-pending'}"><span class="dot"></span>${SL[b.status]||b.status}</span></td>
+        <td><span class="amount">₹${parseFloat(b.amount||0).toLocaleString('en-IN')}</span></td>
+        <td>
+          <div class="act-grp">
+            <button class="iab iab-gray" onclick="editBooking(${b.id})" title="Edit booking">✏</button>
+            ${b.status!=="confirmed"&&b.status!=="completed"?`<button class="iab iab-green" onclick="setStatus(${b.id},'confirmed')" title="Confirm booking">✓</button>`:''}
+            ${b.status==="confirmed"?`<button class="iab iab-purple" onclick="setStatus(${b.id},'completed')" title="Mark as done">★</button>`:''}
+            ${b.status!=="cancelled"&&b.status!=="completed"?`<button class="iab iab-red" onclick="setStatus(${b.id},'cancelled')" title="Cancel booking">✕</button>`:''}
+            ${b.status==="cancelled"||b.status==="completed"?`<button class="iab iab-orange" onclick="setStatus(${b.id},'pending')" title="Reopen booking">↺</button>`:''}
+            <button class="iab iab-red" onclick="delBooking(${b.id},'${(b.client_name||'').replace(/'/g,"\\'")}' )" title="Delete booking">🗑</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+  const s=total>0?start+1:0,e=Math.min(start+PER,total);
+  document.getElementById('pagerInfo').textContent=total>0?`Showing ${s}–${e} of ${total}`:'No results';
+  const pb=document.getElementById('pagerBtns');pb.innerHTML='';
+  for(let i=1;i<=pages;i++){
+    const btn=document.createElement('button');
+    btn.className='pager-btn'+(i===page?' active':'');
+    btn.textContent=i;btn.onclick=()=>{page=i;render();};
+    pb.appendChild(btn);
+  }
+}
+
+function clearFilters(){
+  document.getElementById('qInput').value='';
+  document.getElementById('dateFilter').value='';
+  document.getElementById('typeFilter').value='';
+  document.getElementById('sortSel').value='date-desc';
+  statusFilter='all';
+  document.querySelectorAll('.ftab').forEach(t=>{t.classList.toggle('active',t.dataset.v==='all');});
+  page=1;render();
+}
+
+document.getElementById('statusTabs').addEventListener('click',e=>{
+  if(!e.target.classList.contains('ftab'))return;
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
+  e.target.classList.add('active');
+  statusFilter=e.target.dataset.v;page=1;render();
+});
+['qInput','dateFilter','typeFilter','sortSel'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{page=1;render();});
+  el.addEventListener('change',()=>{page=1;render();});
+});
+
+function openModal(prefill){
+  editId=prefill?prefill.id:null;
+  document.getElementById('modalTitle').textContent=editId?'✦ Edit Booking':'✦ New Booking';
+  document.getElementById('fName').value=prefill?.client_name||'';
+  document.getElementById('fEmail').value=prefill?.email||'';
+  document.getElementById('fPhone').value=prefill?.phone||'';
+  document.getElementById('fAmount').value=prefill?.amount||'';
+  document.getElementById('fType').value=prefill?.reading_type||'Three Card';
+  document.getElementById('fStatus').value=prefill?.status||'pending';
+  document.getElementById('fDate').value=prefill?.booking_date||'';
+  document.getElementById('fTime').value=(prefill?.booking_time||'').slice(0,5);
+  document.getElementById('fNotes').value=prefill?.notes||'';
+  document.getElementById('modalBg').classList.add('open');
+}
+function closeModal(){document.getElementById('modalBg').classList.remove('open');}
+function bgClick(e){if(e.target===document.getElementById('modalBg'))closeModal();}
+
+async function saveBooking(){
+  const name=document.getElementById('fName').value.trim();
+  if(!name){toast('Client name required',false);return;}
+  const btn=document.getElementById('saveBtn');btn.textContent='Saving…';btn.disabled=true;
+  const payload={
+    client_name:name,email:document.getElementById('fEmail').value.trim(),
+    phone:document.getElementById('fPhone').value.trim(),
+    reading_type:document.getElementById('fType').value,
+    booking_date:document.getElementById('fDate').value,
+    booking_time:document.getElementById('fTime').value||'10:00',
+    status:document.getElementById('fStatus').value,
+    amount:parseFloat(document.getElementById('fAmount').value)||0,
+    notes:document.getElementById('fNotes').value,
+  };
+  try{
+    const url=editId?`${API}/bookings/${editId}/`:`${API}/bookings/`;
+    const method=editId?'PUT':'POST';
+    const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok)throw new Error(await r.text());
+    closeModal();await load();
+    toast(editId?'✓ Booking updated':'✓ Booking created');
+  }catch(e){toast('Error: '+e.message,false);}
+  finally{btn.textContent='Save Booking';btn.disabled=false;}
+}
+
+function editBooking(id){openModal(ALL.find(b=>b.id===id));}
+
+async function setStatus(id,next){
+  const labels={pending:'Pending',confirmed:'Confirmed',completed:'Completed',cancelled:'Cancelled'};
+  try{
+    await fetch(`${API}/bookings/${id}/`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:next})});
+    await load();toast('✓ Status → '+(labels[next]||next));
+  }catch{toast('Update failed',false);}
+}
+
+async function delBooking(id,name){
+  if(!confirm(`Delete booking for ${name}?`))return;
+  try{await fetch(`${API}/bookings/${id}/`,{method:'DELETE'});await load();toast('✓ Deleted');}
+  catch{toast('Delete failed',false);}
+}
+
+// Auto-refresh every 30s to catch new user bookings
+setInterval(load, 30000);
+load();
+
+
+</script>
+</body>
+</html>
